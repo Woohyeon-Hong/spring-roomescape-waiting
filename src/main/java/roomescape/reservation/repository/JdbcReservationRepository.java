@@ -73,44 +73,50 @@ public class JdbcReservationRepository implements ReservationRepository {
     @Override
     public List<ReservationWithStatusResult> findAllByName(String name) {
         String sql = """
-        SELECT r.id AS id,
-               r.name AS name,
-               r.reservation_date AS reservation_date,
-               t.id AS time_id,
-               t.start_at AS time_start_at,
-               h.id AS theme_id,
-               h.name AS theme_name,
-               h.description AS theme_description,
-               h.thumbnail_url AS theme_url,
-               'reserved' AS status,
-               0 AS waiting_order
-        FROM reservation r
-        INNER JOIN reservation_time t ON r.time_id = t.id
-        INNER JOIN theme h ON r.theme_id = h.id
-        WHERE r.name = ?
-
-        UNION ALL
-
-        SELECT rw.id AS id,
-               rw.name AS name,
-               rw.reservation_date AS reservation_date,
-               t.id AS time_id,
-               t.start_at AS time_start_at,
-               h.id AS theme_id,
-               h.name AS theme_name,
-               h.description AS theme_description,
-               h.thumbnail_url AS theme_url,
-               'waiting' AS status,
-               ROW_NUMBER() OVER (
-                    PARTITION BY rw.reservation_date, rw.time_id, rw.theme_id
-                    ORDER BY rw.id
-               ) AS waiting_order
-        FROM reservation_waiting rw
-        INNER JOIN reservation_time t ON rw.time_id = t.id
-        INNER JOIN theme h ON rw.theme_id = h.id
-        WHERE rw.name = ?
-
-        ORDER BY reservation_date ASC, time_start_at ASC, waiting_order ASC
+            WITH ranked_waiting AS (
+                SELECT rw.*,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY rw.reservation_date, rw.time_id, rw.theme_id
+                           ORDER BY rw.id
+                       ) AS waiting_order
+                FROM reservation_waiting rw
+            )
+            
+            SELECT r.id,
+                   r.name,
+                   r.reservation_date,
+                   t.id AS time_id,
+                   t.start_at AS time_start_at,
+                   h.id AS theme_id,
+                   h.name AS theme_name,
+                   h.description AS theme_description,
+                   h.thumbnail_url AS theme_url,
+                   'reserved' AS status,
+                   0 AS waiting_order
+            FROM reservation r
+            JOIN reservation_time t ON r.time_id = t.id
+            JOIN theme h ON r.theme_id = h.id
+            WHERE r.name = ?
+            
+            UNION ALL
+            
+            SELECT rw.id,
+                   rw.name,
+                   rw.reservation_date,
+                   t.id AS time_id,
+                   t.start_at AS time_start_at,
+                   h.id AS theme_id,
+                   h.name AS theme_name,
+                   h.description AS theme_description,
+                   h.thumbnail_url AS theme_url,
+                   'waiting' AS status,
+                   rw.waiting_order
+            FROM ranked_waiting rw
+            JOIN reservation_time t ON rw.time_id = t.id
+            JOIN theme h ON rw.theme_id = h.id
+            WHERE rw.name = ?
+            
+            ORDER BY reservation_date, time_start_at, waiting_order
         """;
 
         RowMapper<ReservationWithStatusResult> withStatusResultRowMapper = (resultSet, rowNum) -> {
