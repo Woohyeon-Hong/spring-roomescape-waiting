@@ -31,6 +31,14 @@ dependencies {
     testImplementation 'io.rest-assured:rest-assured:5.3.1'
 }
 
+configurations.matching { it.name.toLowerCase().contains('gatling') }.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group == 'io.netty' && !requested.name.startsWith('netty-tcnative')) {
+            useVersion '4.2.14.Final'
+        }
+    }
+}
+
 test {
     useJUnitPlatform()
 }
