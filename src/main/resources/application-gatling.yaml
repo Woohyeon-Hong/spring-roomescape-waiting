@@ -1,0 +1,16 @@
+spring:
+  sql:
+    init:
+      data-locations: optional:classpath:gatling-data.sql
+
+roomescape:
+  gatling:
+    seed:
+      reservation-count: 10000
+      waiting-count: 30000
+      average-waiting-per-slot: 30
+      average-reservation-per-user: 3
+      average-waiting-per-user: 5
+      start-date: 2026-06-23
+      time-count: 9
+      theme-count: 15
