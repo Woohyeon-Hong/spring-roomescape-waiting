@@ -2,6 +2,7 @@ DROP TABLE IF EXISTS reservation;
 DROP TABLE IF EXISTS reservation_waiting;
 DROP TABLE IF EXISTS reservation_time;
 DROP TABLE IF EXISTS theme;
+DROP TABLE IF EXISTS orders;
 
 CREATE TABLE reservation_time (
     id                 BIGINT           NOT NULL AUTO_INCREMENT,
@@ -14,6 +15,13 @@ CREATE TABLE theme (
     name               VARCHAR(255)     NOT NULL UNIQUE,
     description        VARCHAR(255)     NOT NULL,
     thumbnail_url      VARCHAR(255)     NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE orders (
+    id                 BIGINT           NOT NULL AUTO_INCREMENT,
+    order_id           VARCHAR(255)     NOT NULL UNIQUE,
+    amount             VARCHAR(255)     NOT NULL,
     PRIMARY KEY (id)
 );
 
