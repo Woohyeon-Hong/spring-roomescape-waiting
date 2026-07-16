@@ -175,6 +175,42 @@ class ReservationServiceTest {
         )).isInstanceOf(ThemeNotFoundException.class);
     }
 
+    @DisplayName("예약 생성을 요청하면, 예약 정보가 생성 및 저장된다.")
+    @Test
+    void makeReservationTest_success() {
+        //given
+        when(reservationRepository.existByDateAndTimeIdAndThemeId(any(), any(), any()
+        )).thenReturn(false);
+
+        when(reservationWaitingRepository.existsByDateAndTimeIdAndThemeId(any(), any(), any()
+        )).thenReturn(false);
+
+        ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
+        when(reservationTimeRepository.findById(any()))
+                .thenReturn(Optional.of(time));
+
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        when(themeRepository.findById(any()))
+                .thenReturn(Optional.of(theme));
+
+        Reservation reservation = new Reservation(1L, "brown", LocalDate.of(2026, 5, 15), time, theme);
+        when(reservationRepository.save(any()))
+               .thenReturn(reservation);
+
+        ReservationCommand command = new ReservationCommand(
+                "brown", LocalDate.of(2026, 5, 15), 1L, 1L
+        );
+
+        //when
+        Reservation reserved = reservationService.makeReservation(command);
+
+        //then
+        assertAll(
+                () -> verify(reservationRepository).save(any()),
+                () -> assertThat(reserved).isEqualTo(reservation)
+        );
+    }
+
     @DisplayName("이름에 해당하는 예약들을 조회한다.")
     @Test
     void findReservationsByNameTest() {
