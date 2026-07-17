@@ -58,7 +58,7 @@ class JdbcReservationRepositoryTest {
                         "brown",
                         LocalDate.of(2024, 5, 1),
                         time,
-                        theme
+                        theme, null
                 )
         );
 
@@ -82,7 +82,7 @@ class JdbcReservationRepositoryTest {
                         "brown",
                         LocalDate.of(2024, 5, 1),
                         time,
-                        theme
+                        theme, null
                 )
         );
 
@@ -93,7 +93,7 @@ class JdbcReservationRepositoryTest {
                         "brown",
                         LocalDate.of(2024, 5, 1),
                         time,
-                        theme
+                        theme, null
                 )
         )).isInstanceOf(DataIntegrityViolationException.class);
     }
@@ -163,7 +163,7 @@ class JdbcReservationRepositoryTest {
                         "brown",
                         LocalDate.of(2024, 5, 1),
                         time,
-                        theme
+                        theme, null
                 )
         );
 
@@ -194,7 +194,7 @@ class JdbcReservationRepositoryTest {
                                 "brown",
                                 LocalDate.of(2024, 5, 1),
                                 time,
-                                theme
+                                theme, null
                         )
                 )
         ).isInstanceOf(ReservationNotFoundException.class);
@@ -213,7 +213,7 @@ class JdbcReservationRepositoryTest {
                         "brown",
                         LocalDate.of(2024, 5, 5),
                         time,
-                        theme
+                        theme, null
                 )
         );
 
@@ -223,7 +223,7 @@ class JdbcReservationRepositoryTest {
                         "brown",
                         LocalDate.of(2024, 5, 1),
                         time,
-                        theme
+                        theme, null
                 )
         );
 
@@ -399,7 +399,7 @@ class JdbcReservationRepositoryTest {
 
     private Reservation saveReservation(String name, LocalDate date, ReservationTime time, Theme theme) {
         return reservationRepository.save(
-                Reservation.of( name, date, time, theme)
+                Reservation.of(name, date, time, theme, null)
         );
     }
 

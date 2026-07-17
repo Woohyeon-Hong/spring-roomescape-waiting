@@ -135,7 +135,8 @@ public class ReservationWaitingService {
 
         try {
             reservationRepository.save(
-                    Reservation.of(waiting.getName(), waiting.getDate(), waiting.getTime(), waiting.getTheme())
+                    // ponytail: order 미연동, 결제 플로우 붙을 때 실제 Order로 교체
+                    Reservation.of(waiting.getName(), waiting.getDate(), waiting.getTime(), waiting.getTheme(), null)
             );
         } catch (DuplicateKeyException e) {
             throw new DuplicateReservationException();

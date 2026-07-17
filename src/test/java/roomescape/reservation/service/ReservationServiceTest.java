@@ -33,7 +33,6 @@ import roomescape.reservation.service.dto.PopularThemeResult;
 import roomescape.reservation.service.dto.ReservationCommand;
 import roomescape.reservation.service.dto.ReservationUpdateCommand;
 import roomescape.reservation.service.dto.ReservationWithStatusResult;
-import roomescape.reservationWaiting.domain.ReservationWaiting;
 import roomescape.reservationWaiting.repository.ReservationWaitingRepository;
 import roomescape.theme.domain.Theme;
 import roomescape.theme.exception.ThemeNotFoundException;
@@ -192,7 +191,7 @@ class ReservationServiceTest {
         when(themeRepository.findById(any()))
                 .thenReturn(Optional.of(theme));
 
-        Reservation reservation = new Reservation(1L, "brown", LocalDate.of(2026, 5, 15), time, theme);
+        Reservation reservation = new Reservation(1L, "brown", LocalDate.of(2026, 5, 15), time, theme, null);
         when(reservationRepository.save(any()))
                .thenReturn(reservation);
 
@@ -323,7 +322,7 @@ class ReservationServiceTest {
                         "brown",
                         originalDate,
                         originalTime,
-                        theme
+                        theme, null
                 )));
 
         when(reservationTimeRepository.findById(any()))
@@ -371,7 +370,7 @@ class ReservationServiceTest {
                         "brown",
                         date,
                         time,
-                        theme
+                        theme, null
                 )));
 
         //when & then
@@ -405,7 +404,7 @@ class ReservationServiceTest {
                         "brown",
                         LocalDate.of(2026, 5, 16),
                         new ReservationTime(1L, LocalTime.of(11, 0)),
-                        new Theme(1L, "이름", "설명", "thumbnailUrl")
+                        new Theme(1L, "이름", "설명", "thumbnailUrl"), null
                 )));
 
         doThrow(InvalidReservationDateValueException.class)
@@ -428,7 +427,7 @@ class ReservationServiceTest {
                         "brown",
                         LocalDate.of(2026, 5, 16),
                         new ReservationTime(1L, LocalTime.of(11, 0)),
-                        new Theme(1L, "이름", "설명", "thumbnailUrl")
+                        new Theme(1L, "이름", "설명", "thumbnailUrl"), null
                 )));
 
         when(reservationTimeRepository.findById(any()))
@@ -450,7 +449,7 @@ class ReservationServiceTest {
                         "brown",
                         LocalDate.of(2026, 5, 16),
                         new ReservationTime(1L, LocalTime.of(11, 0)),
-                        new Theme(1L, "이름", "설명", "thumbnailUrl")
+                        new Theme(1L, "이름", "설명", "thumbnailUrl"), null
                 )));
 
         doThrow(InvalidTimeStartAtValueException.class)
@@ -473,7 +472,7 @@ class ReservationServiceTest {
                         "brown",
                         LocalDate.of(2026, 5, 16),
                         new ReservationTime(1L, LocalTime.of(11, 0)),
-                        new Theme(1L, "이름", "설명", "thumbnailUrl")
+                        new Theme(1L, "이름", "설명", "thumbnailUrl"), null
                 )));
 
         when(reservationTimeRepository.findById(any()))
@@ -508,7 +507,7 @@ class ReservationServiceTest {
                         "brown",
                         LocalDate.of(2026, 5, 15),
                         new ReservationTime(1L, LocalTime.of(10, 0)),
-                        new Theme(1L, "이름", "설명", "thumbnailUrl")
+                        new Theme(1L, "이름", "설명", "thumbnailUrl"), null
                 )));
 
         when(reservationTimeRepository.findById(any()))
@@ -535,7 +534,7 @@ class ReservationServiceTest {
                         "brown",
                         LocalDate.of(2026, 5, 15),
                         new ReservationTime(1L, LocalTime.of(10, 0)),
-                        new Theme(1L, "이름", "설명", "thumbnailUrl")
+                        new Theme(1L, "이름", "설명", "thumbnailUrl"), null
                 )));
 
         when(reservationTimeRepository.findById(any()))
@@ -575,7 +574,7 @@ class ReservationServiceTest {
                         "brown",
                         LocalDate.of(2026, 5, 15),
                         new ReservationTime(1L, LocalTime.of(10, 0)),
-                        new Theme(1L, "이름", "설명", "thumbnailUrl")
+                        new Theme(1L, "이름", "설명", "thumbnailUrl"), null
                 )));
 
         when(reservationRepository.deleteById(any()))
@@ -607,7 +606,7 @@ class ReservationServiceTest {
                         "brown",
                         date,
                         time,
-                        theme
+                        theme, null
                 )));
 
         when(reservationRepository.deleteById(any()))
@@ -639,7 +638,7 @@ class ReservationServiceTest {
                         "brown",
                         date,
                         time,
-                        theme
+                        theme, null
                 )));
 
         //when & then
@@ -661,7 +660,7 @@ class ReservationServiceTest {
                         "brown",
                         date,
                         time,
-                        theme
+                        theme, null
                 )));
 
         doThrow(InvalidReservationDateValueException.class)

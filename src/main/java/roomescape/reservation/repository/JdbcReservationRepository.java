@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import roomescape.order.domain.Order;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.exception.ReservationNotFoundException;
 import roomescape.reservation.service.dto.PopularThemeResult;
@@ -33,12 +34,23 @@ public class JdbcReservationRepository implements ReservationRepository {
                 resultSet.getString("theme_thumbnail_url")
         );
 
+        Order order = null;
+        long orderId = resultSet.getLong("orders_id");
+        if (!resultSet.wasNull()) {
+            order = new Order(
+                    orderId,
+                    resultSet.getString("orders_order_id"),
+                    resultSet.getLong("orders_amount")
+            );
+        }
+
         return new Reservation(
                 resultSet.getLong("reservation_id"),
                 resultSet.getString("reservation_name"),
                 resultSet.getDate("reservation_date").toLocalDate(),
                 time,
-                theme
+                theme,
+                order
         );
     };
 
@@ -51,8 +63,8 @@ public class JdbcReservationRepository implements ReservationRepository {
     @Override
     public Reservation save(Reservation reservation) {
         String sql = """
-                INSERT INTO reservation (name, reservation_date, time_id, theme_id)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO reservation (name, reservation_date, time_id, theme_id, order_id)
+                VALUES (?, ?, ?, ?, ?)
                 """;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -63,6 +75,11 @@ public class JdbcReservationRepository implements ReservationRepository {
             ps.setDate(2, Date.valueOf(reservation.getDate()));
             ps.setLong(3, reservation.getReservationTime().getId());
             ps.setLong(4, reservation.getTheme().getId());
+            if (reservation.getOrder() != null) {
+                ps.setLong(5, reservation.getOrder().getId());
+            } else {
+                ps.setNull(5, java.sql.Types.BIGINT);
+            }
             return ps;
         }, keyHolder);
 
@@ -151,12 +168,17 @@ public class JdbcReservationRepository implements ReservationRepository {
                h.id AS theme_id,
                h.name AS theme_name,
                h.description AS theme_description,
-               h.thumbnail_url AS theme_thumbnail_url
+               h.thumbnail_url AS theme_thumbnail_url,
+               o.id AS orders_id,
+               o.order_id AS orders_order_id,
+               o.amount AS orders_amount
         FROM reservation r
         INNER JOIN reservation_time t
           ON r.time_id = t.id
         INNER JOIN theme h
           ON r.theme_id = h.id
+        LEFT JOIN orders o
+          ON r.order_id = o.id
         WHERE r.id = ?
         FOR UPDATE
         """;
@@ -176,12 +198,17 @@ public class JdbcReservationRepository implements ReservationRepository {
                h.id AS theme_id,
                h.name AS theme_name,
                h.description AS theme_description,
-               h.thumbnail_url AS theme_thumbnail_url
+               h.thumbnail_url AS theme_thumbnail_url,
+               o.id AS orders_id,
+               o.order_id AS orders_order_id,
+               o.amount AS orders_amount
         FROM reservation r
         INNER JOIN reservation_time t
           ON r.time_id = t.id
         INNER JOIN theme h
           ON r.theme_id = h.id
+        LEFT JOIN orders o
+          ON r.order_id = o.id
         WHERE  r.reservation_date = ? AND r.time_id = ? AND r.theme_id = ?
         FOR UPDATE
         """;
@@ -215,12 +242,17 @@ public class JdbcReservationRepository implements ReservationRepository {
                h.id AS theme_id,
                h.name AS theme_name,
                h.description AS theme_description,
-               h.thumbnail_url AS theme_thumbnail_url
+               h.thumbnail_url AS theme_thumbnail_url,
+               o.id AS orders_id,
+               o.order_id AS orders_order_id,
+               o.amount AS orders_amount
         FROM reservation r
         INNER JOIN reservation_time t
           ON r.time_id = t.id
         INNER JOIN theme h
           ON r.theme_id = h.id
+        LEFT JOIN orders o
+          ON r.order_id = o.id
         ORDER BY reservation_date ASC, time_start_at ASC, reservation_id ASC
         """;
 

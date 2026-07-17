@@ -80,7 +80,7 @@ class ReservationWaitingServiceTest {
 
         when(reservationRepository.findByDateAndTimeIdAndThemeIdForUpdate(
                 any(), any(), any())
-        ).thenReturn(Optional.of(new Reservation(1L, "pobi", LocalDate.of(2026, 5, 15), time, theme)));
+        ).thenReturn(Optional.of(new Reservation(1L, "pobi", LocalDate.of(2026, 5, 15), time, theme, null)));
 
         when(reservationWaitingRepository.save(any()))
                 .thenReturn(new ReservationWaiting(1L, "brown", LocalDate.of(2026, 5, 15), time, theme));
@@ -194,7 +194,7 @@ class ReservationWaitingServiceTest {
 
         when(reservationRepository.findByDateAndTimeIdAndThemeIdForUpdate(
                 any(), any(), any())
-        ).thenReturn(Optional.of(new Reservation(1L, "brown", LocalDate.of(2026, 5, 15), time, theme)));
+        ).thenReturn(Optional.of(new Reservation(1L, "brown", LocalDate.of(2026, 5, 15), time, theme, null)));
 
         //when & then
         assertThatThrownBy(() -> reservationWaitingService.makeReservationWaiting(

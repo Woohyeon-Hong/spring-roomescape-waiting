@@ -64,7 +64,8 @@ public class ReservationService {
 
         try {
             return reservationRepository.save(
-                    Reservation.of(command.name(), command.date(), time, theme)
+                    // ponytail: order 미연동, 결제 플로우 붙을 때 실제 Order로 교체
+                    Reservation.of(command.name(), command.date(), time, theme, null)
             );
         } catch (DuplicateKeyException e) {
             throw new DuplicateReservationException();

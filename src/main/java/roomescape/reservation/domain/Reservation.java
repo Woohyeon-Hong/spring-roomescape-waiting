@@ -2,6 +2,7 @@ package roomescape.reservation.domain;
 
 import java.time.LocalDate;
 import java.util.Objects;
+import roomescape.order.domain.Order;
 import roomescape.theme.domain.Theme;
 import roomescape.time.domain.ReservationTime;
 
@@ -12,17 +13,20 @@ public class Reservation {
     private final LocalDate date;
     private final ReservationTime reservationTime;
     private final Theme theme;
+    private final Order order;
 
-    public Reservation(Long id, String name, LocalDate date, ReservationTime reservationTime, Theme theme) {
+    public Reservation(Long id, String name, LocalDate date,
+                       ReservationTime reservationTime, Theme theme, Order order) {
         this.id = id;
         this.name = name;
         this.date = date;
         this.reservationTime = reservationTime;
         this.theme = theme;
+        this.order = order;
     }
 
-    public static Reservation of(String name, LocalDate date, ReservationTime time, Theme theme) {
-        return new Reservation(null, name, date, time, theme);
+    public static Reservation of(String name, LocalDate date, ReservationTime time, Theme theme, Order order) {
+        return new Reservation(null, name, date, time, theme, order);
     }
 
     public Reservation updateId(long id) {
@@ -31,7 +35,8 @@ public class Reservation {
                 this.name,
                 this.date,
                 this.reservationTime,
-                this.theme
+                this.theme,
+                order
         );
     }
 
@@ -41,7 +46,8 @@ public class Reservation {
                 this.name,
                 date,
                 this.reservationTime,
-                this.theme
+                this.theme,
+                order
         );
     }
 
@@ -51,7 +57,8 @@ public class Reservation {
                 this.name,
                 this.date,
                 time,
-                this.theme
+                this.theme,
+                order
         );
     }
 
@@ -77,6 +84,10 @@ public class Reservation {
 
     public Theme getTheme() {
         return theme;
+    }
+
+    public Order getOrder() {
+        return order;
     }
 
     @Override
