@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import roomescape.order.domain.Order;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.exception.ReservationNotFoundException;
 import roomescape.reservation.service.dto.PopularThemeResult;
@@ -49,7 +50,8 @@ class JdbcReservationRepositoryTest {
     void saveTest() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Order order = createOrder(1000L);
 
         // when
         Reservation saved = reservationRepository.save(
@@ -58,7 +60,8 @@ class JdbcReservationRepositoryTest {
                         "brown",
                         LocalDate.of(2024, 5, 1),
                         time,
-                        theme, null
+                        theme, 
+                        order
                 )
         );
 
@@ -69,12 +72,60 @@ class JdbcReservationRepositoryTest {
         );
     }
 
+    private ReservationTime createTime(LocalTime time) {
+        jdbcTemplate.update(
+                "INSERT INTO reservation_time (start_at) VALUES (?)",
+                Time.valueOf(time)
+        );
+
+        long timeId = jdbcTemplate.queryForObject(
+                "SELECT id FROM reservation_time WHERE start_at = ?",
+                Long.class,
+                Time.valueOf(time)
+        );
+
+        return new ReservationTime(timeId, time);
+    }
+
+    private Theme createTheme(String name, String description, String thumbnailUrl, Long amount) {
+        jdbcTemplate.update(
+                "INSERT INTO theme (name, description, thumbnail_url, amount) VALUES (?, ?, ?, ?)",
+                name, description, thumbnailUrl, amount
+        );
+
+        Long themeId = jdbcTemplate.queryForObject(
+                "SELECT id FROM theme WHERE name = ?",
+                Long.class,
+                name
+        );
+
+        return new Theme(themeId, name, description, thumbnailUrl, amount);
+    }
+
+    private Order createOrder(Long amount) {
+        String orderId = java.util.UUID.randomUUID().toString();
+
+        jdbcTemplate.update(
+                "INSERT INTO orders (order_id, amount) VALUES (?, ?)",
+                orderId, amount
+        );
+
+        Long id = jdbcTemplate.queryForObject(
+                "SELECT id FROM orders WHERE order_id = ?",
+                Long.class,
+                orderId
+        );
+
+        return new Order(id, orderId, amount);
+    }
+
     @Test
     @DisplayName("기존에 이미 동일한 예약이 있으면 예외가 발생한다.")
     void saveTest_duplicate() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Order order1 = createOrder(1000L);
 
         reservationRepository.save(
                 new Reservation(
@@ -82,9 +133,12 @@ class JdbcReservationRepositoryTest {
                         "brown",
                         LocalDate.of(2024, 5, 1),
                         time,
-                        theme, null
+                        theme,
+                        order1
                 )
         );
+
+        Order order2 = createOrder(1000L);
 
         // when & then
         assertThatThrownBy(() -> reservationRepository.save(
@@ -93,7 +147,8 @@ class JdbcReservationRepositoryTest {
                         "brown",
                         LocalDate.of(2024, 5, 1),
                         time,
-                        theme, null
+                        theme,
+                        order2
                 )
         )).isInstanceOf(DataIntegrityViolationException.class);
     }
@@ -103,9 +158,10 @@ class JdbcReservationRepositoryTest {
     void deleteByIdTest() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Order order = createOrder(1000L);
 
-        Reservation saved = saveReservation("brown",  LocalDate.of(2024, 5, 1), time, theme);
+        Reservation saved = saveReservation("brown",  LocalDate.of(2024, 5, 1), time, theme, order);
 
         // when
         reservationRepository.deleteById(saved.getId());
@@ -115,13 +171,21 @@ class JdbcReservationRepositoryTest {
         assertThat(results).isEmpty();
     }
 
+    private Reservation saveReservation(String name, LocalDate date, ReservationTime time, Theme theme, Order order) {
+        return reservationRepository.save(
+                Reservation.of(name, date, time, theme, order)
+        );
+    }
+
     @Test
     @DisplayName("예약 데이터를 삭제해도 시간/테마 데이터는 함께 삭제되지 않는다.")
     void deleteByIdTest_reservation_delete_does_not_delete_time_and_theme() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
-        Reservation saved = saveReservation("brown", LocalDate.of(2024, 5, 1), time, theme);
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Order order = createOrder(1000L);
+
+        Reservation saved = saveReservation("brown", LocalDate.of(2024, 5, 1), time, theme, order);
 
         // when
         reservationRepository.deleteById(saved.getId());
@@ -142,11 +206,17 @@ class JdbcReservationRepositoryTest {
                 Integer.class,
                 theme.getId()
         );
+        Integer orderCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM orders WHERE id = ?",
+                Integer.class,
+                order.getId()
+        );
 
         assertAll(
                 () -> assertThat(reservationCount).isEqualTo(0),
                 () -> assertThat(timeCount).isEqualTo(1),
-                () -> assertThat(themeCount).isEqualTo(1)
+                () -> assertThat(themeCount).isEqualTo(1),
+                () -> assertThat(orderCount).isEqualTo(1)
         );
     }
 
@@ -155,7 +225,8 @@ class JdbcReservationRepositoryTest {
     void updateTest() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Order order = createOrder(1000L);
 
         Reservation saved = reservationRepository.save(
                 new Reservation(
@@ -163,7 +234,8 @@ class JdbcReservationRepositoryTest {
                         "brown",
                         LocalDate.of(2024, 5, 1),
                         time,
-                        theme, null
+                        theme,
+                        order
                 )
         );
 
@@ -173,9 +245,12 @@ class JdbcReservationRepositoryTest {
         reservationRepository.update(updated);
 
         // then
+        Reservation found = reservationRepository.findByIdForUpdate(saved.getId())
+                .orElseThrow();
+
         assertAll(
-                () -> assertThat(updated.getId()).isNotNull(),
-                () -> assertThat(updated.getDate()).isEqualTo(LocalDate.of(2024, 5, 5))
+                () -> assertThat(found.getId()).isEqualTo(saved.getId()),
+                () -> assertThat(found.getDate()).isEqualTo(LocalDate.of(2024, 5, 5))
         );
     }
 
@@ -184,7 +259,8 @@ class JdbcReservationRepositoryTest {
     void updateTest_do_not_exist() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Order order = createOrder(1000L);
 
         // when & then
         assertThatThrownBy(
@@ -194,7 +270,8 @@ class JdbcReservationRepositoryTest {
                                 "brown",
                                 LocalDate.of(2024, 5, 1),
                                 time,
-                                theme, null
+                                theme,
+                                order
                         )
                 )
         ).isInstanceOf(ReservationNotFoundException.class);
@@ -205,7 +282,8 @@ class JdbcReservationRepositoryTest {
     void updateTest_duplicate() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Order order1 = createOrder(1000L);
 
         reservationRepository.save(
                 new Reservation(
@@ -213,9 +291,12 @@ class JdbcReservationRepositoryTest {
                         "brown",
                         LocalDate.of(2024, 5, 5),
                         time,
-                        theme, null
+                        theme,
+                        order1
                 )
         );
+
+        Order order2 = createOrder(1000L);
 
         Reservation saved = reservationRepository.save(
                 new Reservation(
@@ -223,7 +304,8 @@ class JdbcReservationRepositoryTest {
                         "brown",
                         LocalDate.of(2024, 5, 1),
                         time,
-                        theme, null
+                        theme,
+                        order2
                 )
         );
 
@@ -240,13 +322,20 @@ class JdbcReservationRepositoryTest {
     void findByIdForUpdate() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Order order = createOrder(1000L);
 
-        Reservation saved = saveReservation("brown", LocalDate.of(2024, 5, 1), time, theme);
+        Reservation saved = saveReservation("brown", LocalDate.of(2024, 5, 1), time, theme, order);
 
-        // when & then
+        // when
+        Optional<Reservation> found = reservationRepository.findByIdForUpdate(saved.getId());
+
+        // then
         assertAll(
-                () -> assertThat(reservationRepository.findByIdForUpdate(saved.getId())).isPresent(),
+                () -> assertThat(found).isPresent(),
+                () -> assertThat(found.get().getTheme().getAmount()).isEqualTo(1000L),
+                () -> assertThat(found.get().getOrder().getOrderId()).isEqualTo(order.getOrderId()),
+                () -> assertThat(found.get().getOrder().getAmount()).isEqualTo(1000L),
                 () -> assertThat(reservationRepository.findByIdForUpdate(999L)).isEmpty()
         );
     }
@@ -256,11 +345,11 @@ class JdbcReservationRepositoryTest {
     void findAll() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
 
-        Reservation saved1 = saveReservation("brown", LocalDate.of(2024, 5, 1), time, theme);
-        Reservation saved2 = saveReservation("brown", LocalDate.of(2024, 5, 2), time, theme);
-        Reservation saved3 = saveReservation("poppy", LocalDate.of(2024, 5, 3), time, theme);
+        Reservation saved1 = saveReservation("brown", LocalDate.of(2024, 5, 1), time, theme, createOrder(1000L));
+        Reservation saved2 = saveReservation("brown", LocalDate.of(2024, 5, 2), time, theme, createOrder(1000L));
+        Reservation saved3 = saveReservation("poppy", LocalDate.of(2024, 5, 3), time, theme, createOrder(1000L));
 
         // when
         List<Reservation> reservations = reservationRepository.findAll();
@@ -277,11 +366,11 @@ class JdbcReservationRepositoryTest {
     void findAllByName() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
 
-        Reservation reservation1 = saveReservation("brown", LocalDate.of(2024, 5, 1), time, theme);
-        saveReservation("poppy", LocalDate.of(2024, 5, 2), time, theme);
-        Reservation reservation2 = saveReservation("brown", LocalDate.of(2024, 5, 3), time, theme);
+        Reservation reservation1 = saveReservation("brown", LocalDate.of(2024, 5, 1), time, theme, createOrder(1000L));
+        saveReservation("poppy", LocalDate.of(2024, 5, 2), time, theme, createOrder(1000L));
+        Reservation reservation2 = saveReservation("brown", LocalDate.of(2024, 5, 3), time, theme, createOrder(1000L));
 
         ReservationWaiting waiting1 = reservationWaitingRepository.save(ReservationWaiting.of(
                 "brown", LocalDate.of(2024, 5, 2), time, theme
@@ -306,9 +395,9 @@ class JdbcReservationRepositoryTest {
     @DisplayName("from과 to 사이 일정의 예약들에 대해, 상위 limit 개의 테마들을 조회한다.")
     void findPopularThemesTest() {
         // given
-        Theme woowaTheme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
-        Theme pairTheme = createTheme("페어", "페어 전용 테마", "https://pair.com");
-        Theme carrotTheme = createTheme("당근", "당근 전용 테마", "https://carrot.com");
+        Theme woowaTheme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Theme pairTheme = createTheme("페어", "페어 전용 테마", "https://pair.com", 1000L);
+        Theme carrotTheme = createTheme("당근", "당근 전용 테마", "https://carrot.com", 1000L);
 
         ReservationTime time = createTime(LocalTime.of(10, 0));
 
@@ -319,14 +408,14 @@ class JdbcReservationRepositoryTest {
                 )
         );
 
-        saveReservation("brown",today.minusDays(1), time, woowaTheme);
-        saveReservation("pobi",today.minusDays(2), time, woowaTheme);
-        saveReservation("jason",today.minusDays(3), time, woowaTheme);
-        saveReservation("eden", today.minusDays(1), time, pairTheme);
-        saveReservation("lea", today.minusDays(2), time, pairTheme);
-        saveReservation("wedge", today.minusDays(1), time, carrotTheme);
-        saveReservation("todayReservation", today, time, carrotTheme);
-        saveReservation("outOfRangeReservation", today.minusDays(8), time, carrotTheme);
+        saveReservation("brown",today.minusDays(1), time, woowaTheme, createOrder(1000L));
+        saveReservation("pobi",today.minusDays(2), time, woowaTheme, createOrder(1000L));
+        saveReservation("jason",today.minusDays(3), time, woowaTheme, createOrder(1000L));
+        saveReservation("eden", today.minusDays(1), time, pairTheme, createOrder(1000L));
+        saveReservation("lea", today.minusDays(2), time, pairTheme, createOrder(1000L));
+        saveReservation("wedge", today.minusDays(1), time, carrotTheme, createOrder(1000L));
+        saveReservation("todayReservation", today, time, carrotTheme, createOrder(1000L));
+        saveReservation("outOfRangeReservation", today.minusDays(8), time, carrotTheme, createOrder(1000L));
 
         // when
         List<PopularThemeResult> popularThemes = reservationRepository.findPopularThemes(
@@ -346,9 +435,10 @@ class JdbcReservationRepositoryTest {
     void existByDateAndTimeIdAndThemeIdExceptId() {
         //given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Order order = createOrder(1000L);
 
-        Reservation saved = saveReservation("brown", LocalDate.of(2024, 5, 1), time, theme);
+        Reservation saved = saveReservation("brown", LocalDate.of(2024, 5, 1), time, theme, order);
 
         //when & then
         assertAll(
@@ -367,50 +457,15 @@ class JdbcReservationRepositoryTest {
         );
     }
 
-    private ReservationTime createTime(LocalTime time) {
-        jdbcTemplate.update(
-                "INSERT INTO reservation_time (start_at) VALUES (?)",
-                Time.valueOf(time)
-        );
-
-        long timeId = jdbcTemplate.queryForObject(
-                "SELECT id FROM reservation_time WHERE start_at = ?",
-                Long.class,
-                Time.valueOf(time)
-        );
-
-        return new ReservationTime(timeId, time);
-    }
-
-    private Theme createTheme(String name, String description, String thumbnailUrl) {
-        jdbcTemplate.update(
-                "INSERT INTO theme (name, description, thumbnail_url, amount) VALUES (?, ?, ?, ?)",
-                name, description, thumbnailUrl, 1000L
-        );
-
-        Long themeId = jdbcTemplate.queryForObject(
-                "SELECT id FROM theme WHERE name = ?",
-                Long.class,
-                name
-        );
-
-        return new Theme(themeId, name, description, thumbnailUrl, 1000L);
-    }
-
-    private Reservation saveReservation(String name, LocalDate date, ReservationTime time, Theme theme) {
-        return reservationRepository.save(
-                Reservation.of(name, date, time, theme, null)
-        );
-    }
-
     @DisplayName("date, themeId, timeId를 기준으로 예약을 조회한다.")
     @Test
     void findByDateAndTimeIdAndThemeIdForUpdateTest() {
         //given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Order order = createOrder(1000L);
 
-        Reservation saved = saveReservation("brown", LocalDate.of(2024, 5, 1), time, theme);
+        Reservation saved = saveReservation("brown", LocalDate.of(2024, 5, 1), time, theme, order);
 
         //when
         Optional<Reservation> result = reservationRepository.findByDateAndTimeIdAndThemeIdForUpdate(
@@ -420,6 +475,37 @@ class JdbcReservationRepositoryTest {
         );
 
         //then
-        assertThat(result).isPresent();
+        assertAll(
+                () -> assertThat(result).isPresent(),
+                () -> assertThat(result.get().getTheme().getAmount()).isEqualTo(1000L),
+                () -> assertThat(reservationRepository.findByDateAndTimeIdAndThemeIdForUpdate(
+                        saved.getDate(), saved.getReservationTime().getId() + 1, saved.getTheme().getId()
+                )).isEmpty()
+        );
+    }
+
+    @DisplayName("date, timeId, themeId에 해당하는 예약이 존재하는지 조회한다.")
+    @Test
+    void existByDateAndTimeIdAndThemeIdTest() {
+        //given
+        ReservationTime time = createTime(LocalTime.of(10, 0));
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Order order = createOrder(1000L);
+
+        Reservation saved = saveReservation("brown", LocalDate.of(2024, 5, 1), time, theme, order);
+
+        //when & then
+        assertAll(
+                () -> assertThat(reservationRepository.existByDateAndTimeIdAndThemeId(
+                        saved.getDate(),
+                        saved.getReservationTime().getId(),
+                        saved.getTheme().getId()
+                )).isTrue(),
+                () -> assertThat(reservationRepository.existByDateAndTimeIdAndThemeId(
+                        LocalDate.of(2026, 5, 20),
+                        saved.getReservationTime().getId(),
+                        saved.getTheme().getId()
+                )).isFalse()
+        );
     }
 }

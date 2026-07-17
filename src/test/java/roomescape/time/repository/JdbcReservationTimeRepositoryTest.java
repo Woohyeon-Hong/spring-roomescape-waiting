@@ -79,9 +79,10 @@ class JdbcReservationTimeRepositoryTest {
     void deleteByIdTest_used() {
         //given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-
         Long themeId = createTheme("테마", "설명", "url", 1000L);
-        createReservation("brown", time, LocalDate.of(2026, 5, 6), themeId);
+        Long orderId = createOrder(1000L);
+
+        createReservation("brown", time, LocalDate.of(2026, 5, 6), themeId, orderId);
 
         //when & then
         assertThatThrownBy(
@@ -143,7 +144,9 @@ class JdbcReservationTimeRepositoryTest {
         LocalDate date = LocalDate.of(2025, 1, 1);
 
         Long themeId = createTheme("테마", "설명", "url", 1000L);
-        createReservation("brown", time1, date, themeId);
+        Long orderId = createOrder(1000L);
+
+        createReservation("brown", time1, date, themeId, orderId);
 
         // when
         List<AvailableTimeQueryResult> result = reservationTimeRepository.findAvailableTimes(themeId, date);
@@ -168,9 +171,11 @@ class JdbcReservationTimeRepositoryTest {
 
         LocalDate date = LocalDate.of(2025, 1, 1);
 
-        Long themeId = createTheme("테마", "설명", "url", 1000L);;
+        Long themeId = createTheme("테마", "설명", "url", 1000L);
+        Long orderId = createOrder(1000L);
+
         createReservationWaiting("brown", time1, date, themeId);
-        createReservation("brown", time2, date, themeId);
+        createReservation("brown", time2, date, themeId, orderId);
 
         // when
         List<AvailableTimeQueryResult> result = reservationTimeRepository.findAvailableTimes(themeId, date);
@@ -203,11 +208,20 @@ class JdbcReservationTimeRepositoryTest {
         );
     }
 
-    private void createReservation(String name, ReservationTime time, LocalDate date, Long themeId) {
+    private Long createOrder(Long amount) {
+        jdbcTemplate.update(
+                "INSERT INTO orders (order_id, amount) VALUES (?, ?)",
+                java.util.UUID.randomUUID().toString(), amount
+        );
+
+        return jdbcTemplate.queryForObject("SELECT MAX(id) FROM orders", Long.class);
+    }
+
+    private void createReservation(String name, ReservationTime time, LocalDate date, Long themeId, Long orderId) {
         jdbcTemplate.update("""
-            insert into reservation(name, reservation_date, time_id, theme_id)
-            values (?, ?, ?, ?)
-        """, name, date, time.getId(), themeId
+            insert into reservation(name, reservation_date, time_id, theme_id, order_id)
+            values (?, ?, ?, ?, ?)
+        """, name, date, time.getId(), themeId, orderId
         );
     }
 

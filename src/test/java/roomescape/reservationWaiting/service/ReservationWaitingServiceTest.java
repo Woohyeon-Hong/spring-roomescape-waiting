@@ -21,6 +21,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import roomescape.auth.exception.AuthorizationException;
+import roomescape.order.domain.Order;
+import roomescape.order.repository.OrderRepository;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.exception.InvalidReservationDateValueException;
 import roomescape.reservation.repository.ReservationRepository;
@@ -54,6 +56,9 @@ class ReservationWaitingServiceTest {
 
     @Mock
     ReservationRepository reservationRepository;
+
+    @Mock
+    OrderRepository orderRepository;
 
     @Mock
     ExpiryValidator expiryValidator;
@@ -289,17 +294,23 @@ class ReservationWaitingServiceTest {
         when(reservationWaitingRepository.deleteById(1L))
                 .thenReturn(1);
 
+        Order order = new Order(1L, "order-id", 1000L);
+        when(orderRepository.save(argThat(o -> o.getAmount().equals(1000L))))
+                .thenReturn(order);
+
         //when
         reservationWaitingService.promoteWaiting(1L, "pobi");
 
         //then
         assertAll(
                 () -> verify(reservationWaitingRepository).deleteById(1L),
+                () -> verify(orderRepository).save(argThat(o -> o.getAmount().equals(1000L))),
                 () -> verify(reservationRepository).save(argThat(reservation ->
                         reservation.getName().equals("pobi")
                                 && reservation.getDate().equals(date)
                                 && reservation.getReservationTime().equals(time)
                                 && reservation.getTheme().equals(theme)
+                                && reservation.getOrder().equals(order)
                 ))
         );
     }

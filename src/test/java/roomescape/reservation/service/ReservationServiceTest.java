@@ -23,6 +23,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import roomescape.auth.exception.AuthorizationException;
+import roomescape.order.domain.Order;
+import roomescape.order.repository.OrderRepository;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.exception.DuplicateReservationException;
 import roomescape.reservation.exception.InvalidReservationDateValueException;
@@ -56,6 +58,9 @@ class ReservationServiceTest {
 
     @Mock
     ThemeRepository themeRepository;
+
+    @Mock
+    OrderRepository orderRepository;
 
     @Mock
     Clock clock;
@@ -191,7 +196,11 @@ class ReservationServiceTest {
         when(themeRepository.findById(any()))
                 .thenReturn(Optional.of(theme));
 
-        Reservation reservation = new Reservation(1L, "brown", LocalDate.of(2026, 5, 15), time, theme, null);
+        Order order = new Order(1L, "order-id", 1000L);
+        when(orderRepository.save(argThat(o -> o.getAmount().equals(1000L))))
+                .thenReturn(order);
+
+        Reservation reservation = new Reservation(1L, "brown", LocalDate.of(2026, 5, 15), time, theme, order);
         when(reservationRepository.save(any()))
                .thenReturn(reservation);
 
@@ -204,7 +213,8 @@ class ReservationServiceTest {
 
         //then
         assertAll(
-                () -> verify(reservationRepository).save(any()),
+                () -> verify(orderRepository).save(argThat(o -> o.getAmount().equals(1000L))),
+                () -> verify(reservationRepository).save(argThat(r -> r.getOrder().equals(order))),
                 () -> assertThat(reserved).isEqualTo(reservation)
         );
     }

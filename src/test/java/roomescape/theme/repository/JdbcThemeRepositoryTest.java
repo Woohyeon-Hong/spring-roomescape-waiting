@@ -81,10 +81,16 @@ class JdbcThemeRepositoryTest {
                 "테마"
         );
 
+        jdbcTemplate.update(
+                "INSERT INTO orders (order_id, amount) VALUES (?, ?)",
+                java.util.UUID.randomUUID().toString(), 1000L
+        );
+        Long orderId = jdbcTemplate.queryForObject("SELECT MAX(id) FROM orders", Long.class);
+
         jdbcTemplate.update("""
-            insert into reservation(name, reservation_date, time_id, theme_id)
-            values (?, ?, ?, ?)
-        """, "brown", LocalDate.of(2026, 5, 6),timeId, themeId
+            insert into reservation(name, reservation_date, time_id, theme_id, order_id)
+            values (?, ?, ?, ?, ?)
+        """, "brown", LocalDate.of(2026, 5, 6), timeId, themeId, orderId
         );
 
         //when & then

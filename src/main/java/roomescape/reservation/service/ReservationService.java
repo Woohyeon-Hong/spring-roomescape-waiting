@@ -7,6 +7,8 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import roomescape.auth.exception.AuthorizationException;
+import roomescape.order.domain.Order;
+import roomescape.order.repository.OrderRepository;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.exception.DuplicateReservationException;
 import roomescape.reservation.exception.ReservationNotFoundException;
@@ -31,6 +33,7 @@ public class ReservationService {
     private final ReservationWaitingRepository reservationWaitingRepository;
     private final ReservationTimeRepository reservationTimeRepository;
     private final ThemeRepository themeRepository;
+    private final OrderRepository orderRepository;
     private final Clock clock;
     private final ExpiryValidator expiryValidator;
 
@@ -38,16 +41,19 @@ public class ReservationService {
     public ReservationService(ReservationRepository reservationRepository,
                               ReservationWaitingRepository reservationWaitingRepository,
                               ReservationTimeRepository reservationTimeRepository, ThemeRepository themeRepository,
+                              OrderRepository orderRepository,
                               Clock clock,
                               ExpiryValidator expiryValidator) {
         this.reservationRepository = reservationRepository;
         this.reservationWaitingRepository = reservationWaitingRepository;
         this.reservationTimeRepository = reservationTimeRepository;
         this.themeRepository = themeRepository;
+        this.orderRepository = orderRepository;
         this.clock = clock;
         this.expiryValidator = expiryValidator;
     }
 
+    @Transactional
     public Reservation makeReservation(ReservationCommand command) {
         if (reservationRepository.existByDateAndTimeIdAndThemeId(
                 command.date(), command.timeId(), command.themeId())) {
@@ -62,10 +68,11 @@ public class ReservationService {
         Theme theme = themeRepository.findById(command.themeId())
                 .orElseThrow(ThemeNotFoundException::new);
 
+        Order order = orderRepository.save(Order.of(theme.getAmount()));
+
         try {
             return reservationRepository.save(
-                    // ponytail: order 미연동, 결제 플로우 붙을 때 실제 Order로 교체
-                    Reservation.of(command.name(), command.date(), time, theme, null)
+                    Reservation.of(command.name(), command.date(), time, theme, order)
             );
         } catch (DuplicateKeyException e) {
             throw new DuplicateReservationException();

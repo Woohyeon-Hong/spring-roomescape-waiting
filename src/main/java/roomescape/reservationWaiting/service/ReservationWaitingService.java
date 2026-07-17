@@ -5,6 +5,8 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import roomescape.auth.exception.AuthorizationException;
+import roomescape.order.domain.Order;
+import roomescape.order.repository.OrderRepository;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.exception.DuplicateReservationException;
 import roomescape.reservation.repository.ReservationRepository;
@@ -31,17 +33,20 @@ public class ReservationWaitingService {
     private final ReservationRepository reservationRepository;
     private final ReservationTimeRepository reservationTimeRepository;
     private final ThemeRepository themeRepository;
+    private final OrderRepository orderRepository;
     private final ExpiryValidator expiryValidator;
 
     public ReservationWaitingService(ReservationWaitingRepository reservationWaitingRepository,
                                      ReservationRepository reservationRepository,
                                      ReservationTimeRepository reservationTimeRepository,
                                      ThemeRepository themeRepository,
+                                     OrderRepository orderRepository,
                                     ExpiryValidator expiryValidator) {
         this.reservationWaitingRepository = reservationWaitingRepository;
         this.reservationRepository = reservationRepository;
         this.reservationTimeRepository = reservationTimeRepository;
         this.themeRepository = themeRepository;
+        this.orderRepository = orderRepository;
         this.expiryValidator = expiryValidator;
     }
 
@@ -133,10 +138,11 @@ public class ReservationWaitingService {
             throw new ReservationWaitingNotFoundException();
         }
 
+        Order order = orderRepository.save(Order.of(waiting.getTheme().getAmount()));
+
         try {
             reservationRepository.save(
-                    // ponytail: order 미연동, 결제 플로우 붙을 때 실제 Order로 교체
-                    Reservation.of(waiting.getName(), waiting.getDate(), waiting.getTime(), waiting.getTheme(), null)
+                    Reservation.of(waiting.getName(), waiting.getDate(), waiting.getTime(), waiting.getTheme(), order)
             );
         } catch (DuplicateKeyException e) {
             throw new DuplicateReservationException();

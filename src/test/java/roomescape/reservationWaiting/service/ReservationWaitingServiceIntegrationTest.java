@@ -22,6 +22,8 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import roomescape.order.domain.Order;
+import roomescape.order.repository.OrderRepository;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.exception.DuplicateReservationException;
 import roomescape.reservation.repository.ReservationRepository;
@@ -63,6 +65,9 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
 
     @MockitoSpyBean
     ReservationRepository reservationRepository;
+
+    @MockitoSpyBean
+    OrderRepository orderRepository;
 
     @DisplayName("동일한 예약 대기 신청이 동시에 들어오면 하나만 성공하고 나머지는 중복 예외가 발생한다")
     @Test
@@ -324,6 +329,44 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
         //when & then
         assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(WAITING_ID, "pobi"))
                 .isInstanceOf(DuplicateReservationException.class);
+
+        assertWaitingExists(WAITING_ID);
+    }
+
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @DisplayName("예약 대기 승격 시 주문 저장이 실패하면 대기 삭제가 롤백된다.")
+    @Test
+    void promoteWaitingTest_rolls_back_when_order_save_fails() {
+        //given
+        reservationTimeService.registerReservationTime(
+                new ReservationTimeCommand(LocalTime.of(10, 0))
+        );
+        themeService.registerTheme(
+                new ThemeCommand(
+                        "테마", "설명", "url", 1000L
+                )
+        );
+
+        reservationService.makeReservation(
+                new ReservationCommand(
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
+                )
+        );
+        reservationWaitingService.makeReservationWaiting(new ReservationWaitingCommand(
+                "pobi",
+                LocalDate.of(2026, 5, 5),
+                1L,
+                1L
+        ));
+        reservationService.deleteReservationById(RESERVATION_ID);
+
+        doThrow(new DuplicateKeyException("duplicate"))
+                .when(orderRepository)
+                .save(any(Order.class));
+
+        //when & then
+        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(WAITING_ID, "pobi"))
+                .isInstanceOf(DuplicateKeyException.class);
 
         assertWaitingExists(WAITING_ID);
     }

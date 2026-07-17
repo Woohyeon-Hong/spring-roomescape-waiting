@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import roomescape.order.domain.Order;
 import roomescape.reservationWaiting.domain.ReservationWaiting;
 import roomescape.theme.domain.Theme;
 import roomescape.time.domain.ReservationTime;
@@ -127,12 +128,17 @@ class JdbcReservationWaitingRepositoryTest {
     void findByIdTest() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-       Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
         ReservationWaiting saved = saveReservationWaiting("brown", LocalDate.of(2024, 5, 1), time, theme);
 
-        // when & then
-        assertThat(reservationWaitingRepository.findById(saved.getId())
-        ).isPresent();
+        // when
+        Optional<ReservationWaiting> found = reservationWaitingRepository.findById(saved.getId());
+
+        // then
+        assertAll(
+                () -> assertThat(found).isPresent(),
+                () -> assertThat(found.get().getTheme().getAmount()).isEqualTo(1000L)
+        );
     }
 
     private ReservationWaiting saveReservationWaiting(String name, LocalDate date, ReservationTime time, Theme theme) {
@@ -146,7 +152,7 @@ class JdbcReservationWaitingRepositoryTest {
     void findFirstByReservationDateAndTimeIdAndThemeIdTest() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-       Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
         saveReservationWaiting("brown", LocalDate.of(2024, 5, 1), time, theme);
         saveReservationWaiting("pobi", LocalDate.of(2024, 5, 1), time, theme);
 
@@ -158,7 +164,37 @@ class JdbcReservationWaitingRepositoryTest {
         // then
         assertAll(
                 () -> assertThat(result).isPresent(),
-                () -> assertThat(result.get().getName()).isEqualTo("brown")
+                () -> assertThat(result.get().getName()).isEqualTo("brown"),
+                () -> assertThat(result.get().getTheme().getAmount()).isEqualTo(1000L),
+                () -> assertThat(reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeId(
+                        LocalDate.of(2024, 5, 2), time.getId(), theme.getId()
+                )).isEmpty()
+        );
+    }
+
+    @Test
+    @DisplayName("날짜, 시간, 테마를 기반으로 첫번 째 예약 대기를 락을 걸어 조회한다.")
+    void findFirstByReservationDateAndTimeIdAndThemeIdForUpdateTest() {
+        // given
+        ReservationTime time = createTime(LocalTime.of(10, 0));
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        ReservationWaiting first = saveReservationWaiting("brown", LocalDate.of(2024, 5, 1), time, theme);
+        saveReservationWaiting("pobi", LocalDate.of(2024, 5, 1), time, theme);
+
+        // when
+        Optional<ReservationWaiting> result =
+                reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(
+                        LocalDate.of(2024, 5, 1), time.getId(), theme.getId()
+                );
+
+        // then
+        assertAll(
+                () -> assertThat(result).isPresent(),
+                () -> assertThat(result.get().getId()).isEqualTo(first.getId()),
+                () -> assertThat(result.get().getTheme().getAmount()).isEqualTo(1000L),
+                () -> assertThat(reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(
+                        LocalDate.of(2024, 5, 2), time.getId(), theme.getId()
+                )).isEmpty()
         );
     }
 
@@ -215,7 +251,7 @@ class JdbcReservationWaitingRepositoryTest {
     void findPromotableByNameTest_returns_first_when_slot_free() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-       Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
         ReservationWaiting saved = saveReservationWaiting("brown", LocalDate.of(2024, 5, 1), time, theme);
 
         // when & then
@@ -229,13 +265,38 @@ class JdbcReservationWaitingRepositoryTest {
     void findPromotableByNameTest_excludes_when_slot_occupied() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-       Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
         LocalDate date = LocalDate.of(2024, 5, 1);
-        saveReservation("someone", date, time, theme);
+        Order order = createOrder(1000L);
+
+        saveReservation("someone", date, time, theme, order);
         saveReservationWaiting("pobi", date, time, theme);
 
         // when & then
         assertThat(reservationWaitingRepository.findPromotableByName("pobi")).isEmpty();
+    }
+
+    private Order createOrder(Long amount) {
+        Order order = Order.of(amount);
+
+        jdbcTemplate.update(
+                "INSERT INTO orders (order_id, amount) VALUES (?, ?)",
+                order.getOrderId(), order.getAmount()
+        );
+
+        Long orderId = jdbcTemplate.queryForObject(
+                "SELECT MAX(id) FROM orders",
+                Long.class
+        );
+
+        return new Order(orderId, order.getOrderId(), order.getAmount());
+    }
+
+    private void saveReservation(String name, LocalDate date, ReservationTime time, Theme theme, Order order) {
+        jdbcTemplate.update(
+                "INSERT INTO reservation (name, reservation_date, time_id, theme_id, order_id) VALUES (?, ?, ?, ?, ?)",
+                name, Date.valueOf(date), time.getId(), theme.getId(), order.getId()
+        );
     }
 
     @DisplayName("대기열 1순위가 아니면, 슬롯이 비어있어도 승격 가능한 예약 대기 목록에서 제외된다.")
@@ -243,7 +304,7 @@ class JdbcReservationWaitingRepositoryTest {
     void findPromotableByNameTest_excludes_when_not_first_in_queue() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-       Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
         LocalDate date = LocalDate.of(2024, 5, 1);
         ReservationWaiting first = saveReservationWaiting("brown", date, time, theme);
         saveReservationWaiting("pobi", date, time, theme);
@@ -254,13 +315,6 @@ class JdbcReservationWaitingRepositoryTest {
                 () -> assertThat(reservationWaitingRepository.findPromotableByName("brown"))
                         .extracting(ReservationWaiting::getId)
                         .containsExactly(first.getId())
-        );
-    }
-
-    private void saveReservation(String name, LocalDate date, ReservationTime time, Theme theme) {
-        jdbcTemplate.update(
-                "INSERT INTO reservation (name, reservation_date, time_id, theme_id) VALUES (?, ?, ?, ?)",
-                name, Date.valueOf(date), time.getId(), theme.getId()
         );
     }
 

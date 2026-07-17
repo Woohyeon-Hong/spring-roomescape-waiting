@@ -32,7 +32,7 @@ CREATE TABLE reservation (
     reservation_date   DATE            NOT NULL,
     time_id BIGINT                     NOT NULL,
     theme_id BIGINT                    NOT NULL,
-    order_id BIGINT,
+    order_id BIGINT                    NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (time_id) REFERENCES reservation_time (id),
     FOREIGN KEY (theme_id) REFERENCES theme (id),
