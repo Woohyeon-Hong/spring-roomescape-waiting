@@ -22,7 +22,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DuplicateKeyException;
 import roomescape.auth.exception.AuthorizationException;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.exception.DuplicateReservationException;
@@ -308,7 +307,7 @@ class ReservationServiceTest {
         );
     }
 
-    @DisplayName("예약 변경 시, 기존 슬롯의 첫 번째 예약 대기가 예약으로 승격된다.")
+    @DisplayName("예약 변경을 요청하면, 예약 정보가 변경되고 기존 슬롯의 예약 대기는 자동으로 승격되지 않는다.")
     @Test
     void updateReservationTest_success() {
         //given
@@ -327,17 +326,6 @@ class ReservationServiceTest {
                         theme
                 )));
 
-        when(reservationRepository.findByIdForUpdate(1L))
-                .thenReturn(Optional.of(
-                        new Reservation(
-                                1L,
-                                "brown",
-                                originalDate,
-                                originalTime,
-                                theme
-                        )
-                ));
-
         when(reservationTimeRepository.findById(any()))
                 .thenReturn(Optional.of(updatedTime));
 
@@ -346,18 +334,6 @@ class ReservationServiceTest {
 
         when(reservationWaitingRepository.existsByDateAndTimeIdAndThemeId(any(), any(), any()))
                 .thenReturn(false);
-
-        when(reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(any(), any(), any()))
-                .thenReturn(Optional.of(new ReservationWaiting(
-                        1L,
-                        "pobi",
-                        originalDate,
-                        originalTime,
-                        theme))
-                );
-
-        when(reservationWaitingRepository.deleteById(any()))
-                .thenReturn(1);
 
         //when
         reservationService.updateReservation(
@@ -375,15 +351,9 @@ class ReservationServiceTest {
                                 && reservation.getReservationTime().equals(updatedTime)
                                 && reservation.getTheme().equals(theme)
                 )),
-                () -> verify(reservationWaitingRepository)
-                        .findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(originalDate, 1L, 1L),
-                () -> verify(reservationWaitingRepository).deleteById(1L),
-                () -> verify(reservationRepository).save(argThat(reservation ->
-                        reservation.getName().equals("pobi")
-                                && reservation.getDate().equals(originalDate)
-                                && reservation.getReservationTime().equals(originalTime)
-                                && reservation.getTheme().equals(theme)
-                ))
+                () -> verify(reservationWaitingRepository, never())
+                        .findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(any(), any(), any()),
+                () -> verify(reservationWaitingRepository, never()).deleteById(any())
         );
     }
 
@@ -583,104 +553,6 @@ class ReservationServiceTest {
         )).isInstanceOf(ReservationSlotHasWaitingException.class);
     }
 
-    @DisplayName("예약 변경 시, 기존 슬롯의 예약 대기 승격 중 중복이 발생하면 예외가 발생한다.")
-    @Test
-    void updateReservationTest_promote_duplicate() {
-        //given
-        ReservationTime originalTime = new ReservationTime(1L, LocalTime.of(10, 0));
-        ReservationTime updatedTime = new ReservationTime(2L, LocalTime.of(11, 0));
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
-        LocalDate originalDate = LocalDate.of(2026, 5, 15);
-
-        when(reservationRepository.findByIdForUpdate(any()))
-                .thenReturn(Optional.of(new Reservation(
-                        1L,
-                        "brown",
-                        originalDate,
-                        originalTime,
-                        theme
-                )));
-
-        when(reservationTimeRepository.findById(any()))
-                .thenReturn(Optional.of(updatedTime));
-
-        when(reservationRepository.existByDateAndTimeIdAndThemeIdExceptId(any(), any(), any(), any()))
-                .thenReturn(false);
-
-        when(reservationWaitingRepository.existsByDateAndTimeIdAndThemeId(any(), any(), any()))
-                .thenReturn(false);
-
-        when(reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(any(), any(), any()))
-                .thenReturn(Optional.of(new ReservationWaiting(
-                        1L,
-                        "pobi",
-                        originalDate,
-                        originalTime,
-                        theme
-                )));
-
-        when(reservationRepository.save(any()))
-                .thenThrow(DuplicateKeyException.class);
-
-        when(reservationWaitingRepository.deleteById(any()))
-                .thenReturn(1);
-
-        //when & then
-        assertThatThrownBy(() -> reservationService.updateReservation(
-                new ReservationUpdateCommand(LocalDate.of(2026, 5, 16), 2L), 1L, "brown"
-        )).isInstanceOf(DuplicateReservationException.class);
-    }
-
-    @DisplayName("예약 삭제 시, 동일한 슬롯의 예약 대기가 있으면 예약으로 승격된다.")
-    @Test
-    void deleteReservationByIdTest_success() {
-        //given
-        ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
-        LocalDate date = LocalDate.of(2026, 5, 15);
-
-        when(reservationRepository.findByIdForUpdate(any()))
-                .thenReturn(Optional.of(new Reservation(
-                        1L,
-                        "brown",
-                        date,
-                        time,
-                        theme
-                )));
-
-        when(reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(any(), any(), any()))
-                .thenReturn(Optional.of(new ReservationWaiting(
-                        1L,
-                        "pobi",
-                        date,
-                        time,
-                        theme
-                )));
-
-        when(reservationRepository.deleteById(any()))
-                .thenReturn(1);
-
-        when(reservationWaitingRepository.deleteById(any()))
-                .thenReturn(1);
-
-        //when
-        reservationService.deleteReservationById(1L);
-
-        //then
-        assertAll(
-                () -> verify(reservationRepository).deleteById(1L),
-                () -> verify(reservationWaitingRepository)
-                        .findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(date, 1L, 1L),
-                () -> verify(reservationWaitingRepository).deleteById(1L),
-                () -> verify(reservationRepository).save(argThat(reservation ->
-                        reservation.getName().equals("pobi")
-                                && reservation.getDate().equals(date)
-                                && reservation.getReservationTime().equals(time)
-                                && reservation.getTheme().equals(theme)
-                ))
-        );
-    }
-
     @DisplayName("id에 해당하는 예약이 없으면 예외가 발생한다.")
     @Test
     void deleteReservationByIdTest_reservation_not_found() {
@@ -693,9 +565,9 @@ class ReservationServiceTest {
                 .isInstanceOf(ReservationNotFoundException.class);
     }
 
-    @DisplayName("예약 삭제 시, 동일한 슬롯의 예약 대기가 없으면 예약만 삭제된다.")
+    @DisplayName("예약 삭제를 요청하면, 예약만 삭제되고 동일한 슬롯의 예약 대기는 자동으로 승격되지 않는다.")
     @Test
-    void deleteReservationByIdTest_waiting_not_found() {
+    void deleteReservationByIdTest_success() {
         //given
         when(reservationRepository.findByIdForUpdate(any()))
                 .thenReturn(Optional.of(new Reservation(
@@ -706,9 +578,6 @@ class ReservationServiceTest {
                         new Theme(1L, "이름", "설명", "thumbnailUrl")
                 )));
 
-        when(reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(any(), any(), any()))
-                .thenReturn(Optional.empty());
-
         when(reservationRepository.deleteById(any()))
                 .thenReturn(1);
 
@@ -718,12 +587,13 @@ class ReservationServiceTest {
         //then
         assertAll(
                 () -> verify(reservationRepository).deleteById(1L),
-                () -> verify(reservationWaitingRepository, never()).deleteById(any()),
-                () -> verify(reservationRepository, never()).save(any())
+                () -> verify(reservationWaitingRepository, never())
+                        .findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(any(), any(), any()),
+                () -> verify(reservationWaitingRepository, never()).deleteById(any())
         );
     }
 
-    @DisplayName("인가가 포함된 예약 삭제 시, 본인 예약이면 예약을 삭제하고 동일한 슬롯의 예약 대기를 승격한다.")
+    @DisplayName("인가가 포함된 예약 삭제 시, 본인 예약이면 예약이 삭제되고 예약 대기는 자동으로 승격되지 않는다.")
     @Test
     void deleteReservationByIdTest_with_authorization_success() {
         //given
@@ -743,33 +613,15 @@ class ReservationServiceTest {
         when(reservationRepository.deleteById(any()))
                 .thenReturn(1);
 
-        when(reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(any(), any(), any()))
-                .thenReturn(Optional.of(new ReservationWaiting(
-                        1L,
-                        "pobi",
-                        date,
-                        time,
-                        theme
-                )));
-
-        when(reservationWaitingRepository.deleteById(any()))
-                .thenReturn(1);
-
         //when
         reservationService.deleteReservationById(1L, "brown");
 
         //then
         assertAll(
                 () -> verify(reservationRepository).deleteById(1L),
-                () -> verify(reservationWaitingRepository)
-                        .findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(date, 1L, 1L),
-                () -> verify(reservationWaitingRepository).deleteById(1L),
-                () -> verify(reservationRepository).save(argThat(reservation ->
-                        reservation.getName().equals("pobi")
-                                && reservation.getDate().equals(date)
-                                && reservation.getReservationTime().equals(time)
-                                && reservation.getTheme().equals(theme)
-                ))
+                () -> verify(reservationWaitingRepository, never())
+                        .findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(any(), any(), any()),
+                () -> verify(reservationWaitingRepository, never()).deleteById(any())
         );
     }
 

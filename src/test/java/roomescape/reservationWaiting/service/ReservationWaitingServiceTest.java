@@ -3,9 +3,12 @@ package roomescape.reservationWaiting.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
@@ -26,6 +29,7 @@ import roomescape.reservationWaiting.domain.ReservationWaiting;
 import roomescape.reservationWaiting.exception.AlreadyReservedSameSlotException;
 import roomescape.reservationWaiting.exception.DuplicateReservationWaitingException;
 import roomescape.reservationWaiting.exception.ReservationWaitingNotFoundException;
+import roomescape.reservationWaiting.exception.ReservationWaitingNotPromotableException;
 import roomescape.reservationWaiting.exception.ReservationWaitingTargetNotFoundException;
 import roomescape.reservationWaiting.repository.ReservationWaitingRepository;
 import roomescape.reservationWaiting.service.dto.ReservationWaitingCommand;
@@ -265,5 +269,87 @@ class ReservationWaitingServiceTest {
         // when & then
         assertThatThrownBy(() -> reservationWaitingService.deleteReservationWaitingById(1L, "other")).isInstanceOf(
                 AuthorizationException.class);
+    }
+
+    @DisplayName("대기열의 첫 번째 대기를 본인이 승격 요청하면, 대기가 삭제되고 예약으로 저장된다.")
+    @Test
+    void promoteWaitingTest_success() {
+        //given
+        ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        LocalDate date = LocalDate.of(2026, 5, 15);
+        ReservationWaiting waiting = new ReservationWaiting(1L, "pobi", date, time, theme);
+
+        when(reservationWaitingRepository.findById(1L))
+                .thenReturn(Optional.of(waiting));
+
+        when(reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(date, 1L, 1L))
+                .thenReturn(Optional.of(waiting));
+
+        when(reservationWaitingRepository.deleteById(1L))
+                .thenReturn(1);
+
+        //when
+        reservationWaitingService.promoteWaiting(1L, "pobi");
+
+        //then
+        assertAll(
+                () -> verify(reservationWaitingRepository).deleteById(1L),
+                () -> verify(reservationRepository).save(argThat(reservation ->
+                        reservation.getName().equals("pobi")
+                                && reservation.getDate().equals(date)
+                                && reservation.getReservationTime().equals(time)
+                                && reservation.getTheme().equals(theme)
+                ))
+        );
+    }
+
+    @DisplayName("id에 해당하는 예약 대기가 없으면 승격 시 예외가 발생한다.")
+    @Test
+    void promoteWaitingTest_not_found() {
+        //given
+        when(reservationWaitingRepository.findById(1L))
+                .thenReturn(Optional.empty());
+
+        //when & then
+        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(1L, "pobi"))
+                .isInstanceOf(ReservationWaitingNotFoundException.class);
+    }
+
+    @DisplayName("본인 소유가 아닌 예약 대기를 승격 요청하면 예외가 발생한다.")
+    @Test
+    void promoteWaitingTest_unauthorized() {
+        //given
+        ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        LocalDate date = LocalDate.of(2026, 5, 15);
+
+        when(reservationWaitingRepository.findById(1L))
+                .thenReturn(Optional.of(new ReservationWaiting(1L, "pobi", date, time, theme)));
+
+        //when & then
+        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(1L, "other"))
+                .isInstanceOf(AuthorizationException.class);
+    }
+
+    @DisplayName("대기열의 첫 번째가 아닌 예약 대기를 승격 요청하면 예외가 발생한다.")
+    @Test
+    void promoteWaitingTest_not_first_in_queue() {
+        //given
+        ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        LocalDate date = LocalDate.of(2026, 5, 15);
+        ReservationWaiting waiting = new ReservationWaiting(2L, "pobi", date, time, theme);
+        ReservationWaiting first = new ReservationWaiting(1L, "brown", date, time, theme);
+
+        when(reservationWaitingRepository.findById(2L))
+                .thenReturn(Optional.of(waiting));
+
+        when(reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(date, 1L, 1L))
+                .thenReturn(Optional.of(first));
+
+        //when & then
+        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(2L, "pobi"))
+                .isInstanceOf(ReservationWaitingNotPromotableException.class);
     }
 }

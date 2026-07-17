@@ -101,6 +101,30 @@ function renderReservations(reservations) {
   });
 }
 
+function renderPromotableWaitings(waitings) {
+  const root = $("#promotableWaitings");
+  if (!waitings.length) {
+    root.textContent = "승격 가능한 예약 대기가 없습니다.";
+    return;
+  }
+
+  root.innerHTML = "";
+
+  waitings.forEach((waiting) => {
+    const row = document.createElement("div");
+    row.className = "reservation-row";
+    row.innerHTML = `
+      <span class="reservation-text">
+        ${waiting.id}. [${waiting.theme?.name ?? "테마 없음"}] ${waiting.date} ${waiting.time.startAt} - ${waiting.name}
+      </span>
+      <div class="reservation-actions">
+        <button class="ghost reservation-promote" data-id="${waiting.id}" type="button">승격 요청</button>
+      </div>
+    `;
+    root.appendChild(row);
+  });
+}
+
 function renderPopularThemes(popularThemes) {
   const list = $("#popularThemes");
   list.innerHTML = "";
@@ -130,6 +154,19 @@ async function loadReservations() {
 
   const reservations = await api(`/reservations?name=${encodeURIComponent(name)}`);
   renderReservations(reservations);
+}
+
+async function loadPromotableWaitings() {
+  const name = $("#promotableLookupName").value.trim();
+  if (!name) {
+    renderPromotableWaitings([]);
+    return;
+  }
+
+  const waitings = await api("/reservation-waitings/promotable", {
+    headers: { Authorization: name }
+  });
+  renderPromotableWaitings(waitings);
 }
 
 async function loadPopularThemes() {
@@ -212,6 +249,40 @@ $("#availableTimes").addEventListener("click", async (event) => {
     $("#reservationSuccess").textContent =
       `${isWaiting ? "예약 대기 신청" : "예약"} 성공: #${created.id} / [${created.theme?.name ?? "선택 테마"}] ${created.date} ${created.time.startAt} / ${created.name}`;
     setMessage(isWaiting ? "예약 대기 신청이 완료되었습니다." : "예약이 정상적으로 완료되었습니다.");
+  } catch (error) {
+    setMessage(error.message);
+  }
+});
+
+$("#loadPromotable").addEventListener("click", async () => {
+  const name = $("#promotableLookupName").value.trim();
+  if (!name) {
+    setMessage("예약자 이름을 입력해 주세요.");
+    renderPromotableWaitings([]);
+    return;
+  }
+
+  try {
+    await loadPromotableWaitings();
+    setMessage("승격 가능한 예약 대기를 조회했습니다.");
+  } catch (error) {
+    setMessage(error.message);
+  }
+});
+
+$("#promotableWaitings").addEventListener("click", async (event) => {
+  const button = event.target.closest("button.reservation-promote");
+  if (!button) return;
+
+  const name = $("#promotableLookupName").value.trim();
+  try {
+    await api(`/reservation-waitings/${button.dataset.id}/promote`, {
+      method: "POST",
+      headers: { Authorization: name }
+    });
+    setMessage("예약으로 승격되었습니다.");
+    await loadPromotableWaitings();
+    await loadReservations();
   } catch (error) {
     setMessage(error.message);
   }

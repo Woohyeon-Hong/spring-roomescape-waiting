@@ -16,8 +16,6 @@ import roomescape.reservation.service.dto.PopularThemeResult;
 import roomescape.reservation.service.dto.ReservationCommand;
 import roomescape.reservation.service.dto.ReservationUpdateCommand;
 import roomescape.reservation.service.dto.ReservationWithStatusResult;
-import roomescape.reservationWaiting.domain.ReservationWaiting;
-import roomescape.reservationWaiting.exception.ReservationWaitingNotFoundException;
 import roomescape.reservationWaiting.repository.ReservationWaitingRepository;
 import roomescape.theme.domain.Theme;
 import roomescape.theme.exception.ThemeNotFoundException;
@@ -139,10 +137,6 @@ public class ReservationService {
 
         try {
             reservationRepository.update(updated);
-
-            reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(
-                    original.getDate(), original.getReservationTime().getId(), original.getTheme().getId()
-            ).ifPresent(this::promoteFirstWaitingForSameSlotToReservation);
         } catch (DuplicateKeyException e) {
             throw new DuplicateReservationException();
         }
@@ -156,23 +150,6 @@ public class ReservationService {
     private void validateReservationOwnership(Reservation reservation, String userName) {
         if (!reservation.hasSameName(userName)) {
             throw new AuthorizationException();
-        }
-    }
-
-    private void promoteFirstWaitingForSameSlotToReservation(ReservationWaiting waiting) {
-        int affectedRow = reservationWaitingRepository.deleteById(waiting.getId());
-        int nonAffected = 0;
-
-        if (affectedRow == nonAffected) {
-            throw new ReservationWaitingNotFoundException();
-        }
-
-        try {
-            reservationRepository.save(
-                    Reservation.of(waiting.getName(), waiting.getDate(), waiting.getTime(), waiting.getTheme())
-            );
-        } catch (DuplicateKeyException e) {
-            throw new DuplicateReservationException();
         }
     }
 
@@ -218,9 +195,5 @@ public class ReservationService {
         if (affectedRow == nonAffected) {
             throw new ReservationNotFoundException();
         }
-
-        reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(
-                reservation.getDate(), reservation.getReservationTime().getId(), reservation.getTheme().getId()
-        ).ifPresent(this::promoteFirstWaitingForSameSlotToReservation);
     }
 }

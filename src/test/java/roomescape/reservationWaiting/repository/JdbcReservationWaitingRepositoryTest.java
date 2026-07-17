@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
+import java.sql.Date;
 import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -206,6 +207,60 @@ class JdbcReservationWaitingRepositoryTest {
                         saved.getTime().getId(),
                         saved.getTheme().getId()
                 )).isFalse()
+        );
+    }
+
+    @DisplayName("승격 가능한 예약 대기를 조회하면, 슬롯이 비어있고 대기열 1순위인 대기만 반환된다.")
+    @Test
+    void findPromotableByNameTest_returns_first_when_slot_free() {
+        // given
+        ReservationTime time = createTime(LocalTime.of(10, 0));
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+        ReservationWaiting saved = saveReservationWaiting("brown", LocalDate.of(2024, 5, 1), time, theme);
+
+        // when & then
+        assertThat(reservationWaitingRepository.findPromotableByName("brown"))
+                .extracting(ReservationWaiting::getId)
+                .containsExactly(saved.getId());
+    }
+
+    @DisplayName("슬롯에 예약이 남아있으면, 대기열 1순위여도 승격 가능한 예약 대기 목록에서 제외된다.")
+    @Test
+    void findPromotableByNameTest_excludes_when_slot_occupied() {
+        // given
+        ReservationTime time = createTime(LocalTime.of(10, 0));
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+        LocalDate date = LocalDate.of(2024, 5, 1);
+        saveReservation("someone", date, time, theme);
+        saveReservationWaiting("pobi", date, time, theme);
+
+        // when & then
+        assertThat(reservationWaitingRepository.findPromotableByName("pobi")).isEmpty();
+    }
+
+    @DisplayName("대기열 1순위가 아니면, 슬롯이 비어있어도 승격 가능한 예약 대기 목록에서 제외된다.")
+    @Test
+    void findPromotableByNameTest_excludes_when_not_first_in_queue() {
+        // given
+        ReservationTime time = createTime(LocalTime.of(10, 0));
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+        LocalDate date = LocalDate.of(2024, 5, 1);
+        ReservationWaiting first = saveReservationWaiting("brown", date, time, theme);
+        saveReservationWaiting("pobi", date, time, theme);
+
+        // when & then
+        assertAll(
+                () -> assertThat(reservationWaitingRepository.findPromotableByName("pobi")).isEmpty(),
+                () -> assertThat(reservationWaitingRepository.findPromotableByName("brown"))
+                        .extracting(ReservationWaiting::getId)
+                        .containsExactly(first.getId())
+        );
+    }
+
+    private void saveReservation(String name, LocalDate date, ReservationTime time, Theme theme) {
+        jdbcTemplate.update(
+                "INSERT INTO reservation (name, reservation_date, time_id, theme_id) VALUES (?, ?, ?, ?)",
+                name, Date.valueOf(date), time.getId(), theme.getId()
         );
     }
 

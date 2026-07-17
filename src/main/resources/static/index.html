@@ -42,7 +42,16 @@
     </section>
 
     <section class="panel">
-      <h2>3) 최근 1주 인기 테마 Top 10</h2>
+      <h2>3) 승격 가능한 예약 대기</h2>
+      <form class="grid-form" id="promotableLookupForm">
+        <input id="promotableLookupName" maxlength="10" name="promotableLookupName" placeholder="예약자 이름" required />
+        <button id="loadPromotable" type="button">승격 가능한 대기 조회</button>
+      </form>
+      <div class="list" id="promotableWaitings"></div>
+    </section>
+
+    <section class="panel">
+      <h2>4) 최근 1주 인기 테마 Top 10</h2>
       <button class="ghost" id="loadPopular">인기 테마 새로고침</button>
       <ol class="rank-list" id="popularThemes"></ol>
     </section>

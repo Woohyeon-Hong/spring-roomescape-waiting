@@ -1,8 +1,10 @@
 package roomescape.reservationWaiting.controller;
 
 import java.net.URI;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,6 +43,26 @@ public class ReservationWaitingController {
     public ResponseEntity<Void> deleteMyReservationWaiting(
             @LoginName String name, @PathVariable Long id) {
         reservationWaitingService.deleteReservationWaitingById(id, name);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Authenticated
+    @GetMapping("/promotable")
+    public ResponseEntity<List<ReservationWaitingResponse>> getMyPromotableReservationWaitings(
+            @LoginName String name) {
+        List<ReservationWaitingResponse> responses = reservationWaitingService.findPromotableWaitings(name)
+                .stream()
+                .map(ReservationWaitingResponse::from)
+                .toList();
+
+        return ResponseEntity.ok(responses);
+    }
+
+    @Authenticated
+    @PostMapping("/{id}/promote")
+    public ResponseEntity<Void> promoteMyReservationWaiting(
+            @LoginName String name, @PathVariable Long id) {
+        reservationWaitingService.promoteWaiting(id, name);
         return ResponseEntity.noContent().build();
     }
 }

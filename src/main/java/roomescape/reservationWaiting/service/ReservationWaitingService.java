@@ -1,16 +1,19 @@
 package roomescape.reservationWaiting.service;
 
+import java.util.List;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import roomescape.auth.exception.AuthorizationException;
 import roomescape.reservation.domain.Reservation;
+import roomescape.reservation.exception.DuplicateReservationException;
 import roomescape.reservation.repository.ReservationRepository;
 import roomescape.reservation.service.ExpiryValidator;
 import roomescape.reservationWaiting.domain.ReservationWaiting;
 import roomescape.reservationWaiting.exception.AlreadyReservedSameSlotException;
 import roomescape.reservationWaiting.exception.DuplicateReservationWaitingException;
 import roomescape.reservationWaiting.exception.ReservationWaitingNotFoundException;
+import roomescape.reservationWaiting.exception.ReservationWaitingNotPromotableException;
 import roomescape.reservationWaiting.exception.ReservationWaitingTargetNotFoundException;
 import roomescape.reservationWaiting.repository.ReservationWaitingRepository;
 import roomescape.reservationWaiting.service.dto.ReservationWaitingCommand;
@@ -99,6 +102,43 @@ public class ReservationWaitingService {
 
         if (affectedRow == nonAffected) {
             throw new ReservationWaitingNotFoundException();
+        }
+    }
+
+    public List<ReservationWaiting> findPromotableWaitings(String name) {
+        return reservationWaitingRepository.findPromotableByName(name);
+    }
+
+    @Transactional
+    public void promoteWaiting(Long waitingId, String name) {
+        ReservationWaiting waiting = reservationWaitingRepository.findById(waitingId)
+                .orElseThrow(ReservationWaitingNotFoundException::new);
+
+        if (!waiting.hasSameName(name)) {
+            throw new AuthorizationException();
+        }
+
+        ReservationWaiting first = reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(
+                waiting.getDate(), waiting.getTime().getId(), waiting.getTheme().getId()
+        ).orElseThrow(ReservationWaitingNotFoundException::new);
+
+        if (!first.getId().equals(waiting.getId())) {
+            throw new ReservationWaitingNotPromotableException();
+        }
+
+        int affectedRow = reservationWaitingRepository.deleteById(waiting.getId());
+        int nonAffected = 0;
+
+        if (affectedRow == nonAffected) {
+            throw new ReservationWaitingNotFoundException();
+        }
+
+        try {
+            reservationRepository.save(
+                    Reservation.of(waiting.getName(), waiting.getDate(), waiting.getTime(), waiting.getTheme())
+            );
+        } catch (DuplicateKeyException e) {
+            throw new DuplicateReservationException();
         }
     }
 }
