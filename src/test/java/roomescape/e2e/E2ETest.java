@@ -51,11 +51,12 @@ public abstract class E2ETest {
                 .then().statusCode(201);
     }
 
-    protected void createTheme(String name, String description, String thumbnailUrl) {
+    protected void createTheme(String name, String description, String thumbnailUrl, Long amount) {
         Map<String, Object> requestBody = Map.of(
                 "name", name,
                 "description", description,
-                "thumbnailUrl", thumbnailUrl
+                "thumbnailUrl", thumbnailUrl,
+                "amount", amount
         );
 
         RestAssured.given()

@@ -31,7 +31,8 @@ public class JdbcReservationRepository implements ReservationRepository {
                 resultSet.getLong("theme_id"),
                 resultSet.getString("theme_name"),
                 resultSet.getString("theme_description"),
-                resultSet.getString("theme_thumbnail_url")
+                resultSet.getString("theme_thumbnail_url"),
+                resultSet.getLong("theme_amount")
         );
 
         Order order = null;
@@ -99,6 +100,7 @@ public class JdbcReservationRepository implements ReservationRepository {
                h.name AS theme_name,
                h.description AS theme_description,
                h.thumbnail_url AS theme_url,
+               h.amount AS theme_amount,
                'reserved' AS status,
                0 AS waiting_order
         FROM reservation r
@@ -117,6 +119,7 @@ public class JdbcReservationRepository implements ReservationRepository {
                h.name AS theme_name,
                h.description AS theme_description,
                h.thumbnail_url AS theme_url,
+               h.amount AS theme_amount,
                'waiting' AS status,
                ROW_NUMBER() OVER (
                     PARTITION BY rw.reservation_date, rw.time_id, rw.theme_id
@@ -140,7 +143,8 @@ public class JdbcReservationRepository implements ReservationRepository {
                     resultSet.getLong("theme_id"),
                     resultSet.getString("theme_name"),
                     resultSet.getString("theme_description"),
-                    resultSet.getString("theme_url")
+                    resultSet.getString("theme_url"),
+                    resultSet.getLong("theme_amount")
             );
 
             return new ReservationWithStatusResult(
@@ -169,6 +173,7 @@ public class JdbcReservationRepository implements ReservationRepository {
                h.name AS theme_name,
                h.description AS theme_description,
                h.thumbnail_url AS theme_thumbnail_url,
+               h.amount AS theme_amount,
                o.id AS orders_id,
                o.order_id AS orders_order_id,
                o.amount AS orders_amount
@@ -199,6 +204,7 @@ public class JdbcReservationRepository implements ReservationRepository {
                h.name AS theme_name,
                h.description AS theme_description,
                h.thumbnail_url AS theme_thumbnail_url,
+               h.amount AS theme_amount,
                o.id AS orders_id,
                o.order_id AS orders_order_id,
                o.amount AS orders_amount
@@ -243,6 +249,7 @@ public class JdbcReservationRepository implements ReservationRepository {
                h.name AS theme_name,
                h.description AS theme_description,
                h.thumbnail_url AS theme_thumbnail_url,
+               h.amount AS theme_amount,
                o.id AS orders_id,
                o.order_id AS orders_order_id,
                o.amount AS orders_amount
@@ -265,7 +272,8 @@ public class JdbcReservationRepository implements ReservationRepository {
         SELECT t.id,
                t.name,
                t.description,
-               t.thumbnail_url
+               t.thumbnail_url,
+               t.amount
         FROM reservation r
         INNER JOIN theme t
           ON r.theme_id = t.id
@@ -274,7 +282,8 @@ public class JdbcReservationRepository implements ReservationRepository {
         GROUP BY t.id,
                  t.name,
                  t.description,
-                 t.thumbnail_url
+                 t.thumbnail_url,
+                 t.amount
         ORDER BY COUNT(r.id) DESC,
                  t.id ASC
         LIMIT ?
@@ -286,7 +295,8 @@ public class JdbcReservationRepository implements ReservationRepository {
                         resultSet.getLong("id"),
                         resultSet.getString("name"),
                         resultSet.getString("description"),
-                        resultSet.getString("thumbnail_url")
+                        resultSet.getString("thumbnail_url"),
+                        resultSet.getLong("amount")
                 ),
                 Date.valueOf(from),
                 Date.valueOf(to),

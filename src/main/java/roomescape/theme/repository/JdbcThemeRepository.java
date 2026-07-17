@@ -13,13 +13,17 @@ import roomescape.theme.domain.Theme;
 @Repository
 public class JdbcThemeRepository implements ThemeRepository {
 
-    private static final RowMapper<Theme> THEME_ROW_MAPPER = (resultSet, rowNum) ->
-            new Theme(
-                    resultSet.getLong("id"),
-                    resultSet.getString("name"),
-                    resultSet.getString("description"),
-                    resultSet.getString("thumbnail_url")
-            );
+    private static final RowMapper<Theme> THEME_ROW_MAPPER = (resultSet, rowNum) -> {
+        long amount = resultSet.getLong("amount");
+
+        return new Theme(
+                resultSet.getLong("id"),
+                resultSet.getString("name"),
+                resultSet.getString("description"),
+                resultSet.getString("thumbnail_url"),
+                resultSet.getLong("amount")
+        );
+    };
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -30,8 +34,8 @@ public class JdbcThemeRepository implements ThemeRepository {
     @Override
     public Theme save(Theme theme) {
         String sql = """
-               INSERT INTO theme (name, description, thumbnail_url)
-               VALUES (?, ?, ?)
+               INSERT INTO theme (name, description, thumbnail_url, amount)
+               VALUES (?, ?, ?, ?)
                """;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -41,6 +45,7 @@ public class JdbcThemeRepository implements ThemeRepository {
             ps.setString(1, theme.getName());
             ps.setString(2, theme.getDescription());
             ps.setString(3, theme.getThumbnailUrl());
+            ps.setLong(4, theme.getAmount());
             return ps;
         }, keyHolder);
 
@@ -66,7 +71,7 @@ public class JdbcThemeRepository implements ThemeRepository {
                SELECT EXISTS(
                    SELECT 1
                    FROM theme
-                   WHERE name = ?   
+                   WHERE name = ? 
                )
                """;
 
@@ -77,7 +82,7 @@ public class JdbcThemeRepository implements ThemeRepository {
     @Override
     public List<Theme> findAll() {
         String sql = """
-                SELECT id, name, description, thumbnail_url
+                SELECT id, name, description, thumbnail_url, amount
                 FROM theme
                 ORDER BY name ASC
                 """;

@@ -384,8 +384,8 @@ class JdbcReservationRepositoryTest {
 
     private Theme createTheme(String name, String description, String thumbnailUrl) {
         jdbcTemplate.update(
-                "INSERT INTO theme (name, description, thumbnail_url) VALUES (?, ?, ?)",
-                name, description, thumbnailUrl
+                "INSERT INTO theme (name, description, thumbnail_url, amount) VALUES (?, ?, ?, ?)",
+                name, description, thumbnailUrl, 1000L
         );
 
         Long themeId = jdbcTemplate.queryForObject(
@@ -394,7 +394,7 @@ class JdbcReservationRepositoryTest {
                 name
         );
 
-        return new Theme(themeId, name, description, thumbnailUrl);
+        return new Theme(themeId, name, description, thumbnailUrl, 1000L);
     }
 
     private Reservation saveReservation(String name, LocalDate date, ReservationTime time, Theme theme) {

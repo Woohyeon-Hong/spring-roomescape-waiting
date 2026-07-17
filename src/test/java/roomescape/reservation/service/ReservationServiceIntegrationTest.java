@@ -42,7 +42,7 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
         );
         themeService.registerTheme(
                 new ThemeCommand(
-                        "테마", "설명", "url"
+                        "테마", "설명", "url", 1000L
                 )
         );
 
@@ -87,7 +87,7 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
         );
         themeService.registerTheme(
                 new ThemeCommand(
-                        "테마", "설명", "url"
+                        "테마", "설명", "url", 1000L
                 )
         );
         reservationService.makeReservation(
@@ -139,7 +139,7 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
         );
         themeService.registerTheme(
                 new ThemeCommand(
-                        "테마", "설명", "url"
+                        "테마", "설명", "url", 1000L
                 )
         );
 
@@ -179,7 +179,7 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
         );
         themeService.registerTheme(
                 new ThemeCommand(
-                        "테마", "설명", "url"
+                        "테마", "설명", "url", 1000L
                 )
         );
 

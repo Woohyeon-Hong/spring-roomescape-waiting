@@ -34,7 +34,7 @@ class ThemeServiceTest {
 
         //when & then
         assertThatThrownBy(() -> themeService.registerTheme(
-            new ThemeCommand("brown", "설명", "url")
+            new ThemeCommand("brown", "설명", "url", 1000L)
         )).isInstanceOf(DuplicateThemeException.class);
     }
 
@@ -59,7 +59,7 @@ class ThemeServiceTest {
         ThemeService themeService = new ThemeService(themeRepository);
 
         when(themeRepository.findById(1L))
-                .thenReturn(Optional.of(new Theme(1L, "테마", "설명", "url")));
+                .thenReturn(Optional.of(new Theme(1L, "테마", "설명", "url", 1000L)));
 
         when(themeRepository.deleteById(1L))
                 .thenThrow(new DataIntegrityViolationException("foreign key"));

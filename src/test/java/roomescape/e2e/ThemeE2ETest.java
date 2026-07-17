@@ -54,9 +54,9 @@ public class ThemeE2ETest extends E2ETest {
 
         createReservationTime("10:00");
 
-        createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/woowa.png");
-        createTheme("페어 테마", "페어 전용 테마입니다.", "https://example.com/pair.png");
-        createTheme("당근 테마", "당근 전용 테마입니다.", "https://example.com/carrot.png");
+        createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/woowa.png", 1000L);
+        createTheme("페어 테마", "페어 전용 테마입니다.", "https://example.com/pair.png", 1000L);
+        createTheme("당근 테마", "당근 전용 테마입니다.", "https://example.com/carrot.png", 1000L);
 
         createReservation("brown", LocalDate.of(2026, 4, 29), 1L, 1L);
         createReservation("pobi", LocalDate.of(2026, 4, 30), 1L, 1L);

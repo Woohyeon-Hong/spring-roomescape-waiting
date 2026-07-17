@@ -17,7 +17,7 @@ public class ReservationE2ETest extends E2ETest {
     void manageMyReservation() {
         //given
         createReservationTime("10:00");
-        createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/image.png");
+        createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/image.png", 1000L);
 
         Map<String, Object> reservation = Map.of(
                 "name", "brown",
@@ -63,7 +63,7 @@ public class ReservationE2ETest extends E2ETest {
         createReservationTime("10:00");
         createReservationTime("11:00");
 
-        createTheme("테마", "설명", "url");
+        createTheme("테마", "설명", "url", 1000L);
 
         createReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
 
@@ -110,7 +110,7 @@ public class ReservationE2ETest extends E2ETest {
     void manageAdminReservation() {
         //given
         createReservationTime("10:00");
-        createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/image.png");
+        createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/image.png", 1000L);
 
         Map<String, Object> reservation = Map.of(
                 "name", "brown",
@@ -151,7 +151,7 @@ public class ReservationE2ETest extends E2ETest {
     void deleteMyReservationById_promotes_first_waiting() {
         //given
         createReservationTime("10:00");
-        createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/image.png");
+        createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/image.png", 1000L);
 
         createReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
         createReservationWaiting("pobi", LocalDate.of(2026, 5, 5), 1L, 1L);

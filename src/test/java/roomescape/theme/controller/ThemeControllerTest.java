@@ -33,7 +33,7 @@ class ThemeControllerTest {
     void getPopularThemes_success() throws Exception {
         //given
         when(reservationService.findPopularThemes(anyInt(), anyInt()))
-                .thenReturn(List.of(new PopularThemeResult(1L, "테마", "설명", "url")));
+                .thenReturn(List.of(new PopularThemeResult(1L, "테마", "설명", "url", 1000L)));
 
         //when & then
         mockMvc.perform(

@@ -15,6 +15,7 @@ CREATE TABLE theme (
     name               VARCHAR(255)     NOT NULL UNIQUE,
     description        VARCHAR(255)     NOT NULL,
     thumbnail_url      VARCHAR(255)     NOT NULL,
+    amount             BIGINT           NOT NULL,
     PRIMARY KEY (id)
 );
 

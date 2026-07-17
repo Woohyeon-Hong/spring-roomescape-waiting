@@ -37,7 +37,7 @@ class JdbcReservationWaitingRepositoryTest {
     void saveTest() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
 
         // when
         ReservationWaiting saved1 = reservationWaitingRepository.save(
@@ -80,10 +80,10 @@ class JdbcReservationWaitingRepositoryTest {
         return new ReservationTime(timeId, time);
     }
 
-    private Theme createTheme(String name, String description, String thumbnailUrl) {
+    private Theme createTheme(String name, String description, String thumbnailUrl, Long amount) {
         jdbcTemplate.update(
-                "INSERT INTO theme (name, description, thumbnail_url) VALUES (?, ?, ?)",
-                name, description, thumbnailUrl
+                "INSERT INTO theme (name, description, thumbnail_url, amount) VALUES (?, ?, ?, ?)",
+                name, description, thumbnailUrl, amount
         );
 
         Long themeId = jdbcTemplate.queryForObject(
@@ -92,7 +92,7 @@ class JdbcReservationWaitingRepositoryTest {
                 name
         );
 
-        return new Theme(themeId, name, description, thumbnailUrl);
+        return new Theme(themeId, name, description, thumbnailUrl, amount);
     }
 
     @Test
@@ -100,7 +100,7 @@ class JdbcReservationWaitingRepositoryTest {
     void saveTest_duplicate() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
 
         reservationWaitingRepository.save(
                 ReservationWaiting.of(
@@ -121,13 +121,13 @@ class JdbcReservationWaitingRepositoryTest {
                 )
         )).isInstanceOf(DataIntegrityViolationException.class);
     }
-
+    
     @Test
     @DisplayName("아이디를 기반으로 예약 대기를 조회한다.")
     void findByIdTest() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+       Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
         ReservationWaiting saved = saveReservationWaiting("brown", LocalDate.of(2024, 5, 1), time, theme);
 
         // when & then
@@ -146,7 +146,7 @@ class JdbcReservationWaitingRepositoryTest {
     void findFirstByReservationDateAndTimeIdAndThemeIdTest() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+       Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
         saveReservationWaiting("brown", LocalDate.of(2024, 5, 1), time, theme);
         saveReservationWaiting("pobi", LocalDate.of(2024, 5, 1), time, theme);
 
@@ -167,7 +167,7 @@ class JdbcReservationWaitingRepositoryTest {
     void existByDateAndTimeIdAndThemeIdAndNameTest() {
         //given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+       Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
         ReservationWaiting saved = saveReservationWaiting("brown", LocalDate.of(2024, 5, 1), time, theme);
 
         //when & then
@@ -192,7 +192,7 @@ class JdbcReservationWaitingRepositoryTest {
     void existsByDateAndTimeIdAndThemeIdTest() {
         //given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+       Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
         ReservationWaiting saved = saveReservationWaiting("brown", LocalDate.of(2024, 5, 1), time, theme);
 
         //when & then
@@ -215,7 +215,7 @@ class JdbcReservationWaitingRepositoryTest {
     void findPromotableByNameTest_returns_first_when_slot_free() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+       Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
         ReservationWaiting saved = saveReservationWaiting("brown", LocalDate.of(2024, 5, 1), time, theme);
 
         // when & then
@@ -229,7 +229,7 @@ class JdbcReservationWaitingRepositoryTest {
     void findPromotableByNameTest_excludes_when_slot_occupied() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+       Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
         LocalDate date = LocalDate.of(2024, 5, 1);
         saveReservation("someone", date, time, theme);
         saveReservationWaiting("pobi", date, time, theme);
@@ -243,7 +243,7 @@ class JdbcReservationWaitingRepositoryTest {
     void findPromotableByNameTest_excludes_when_not_first_in_queue() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+       Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
         LocalDate date = LocalDate.of(2024, 5, 1);
         ReservationWaiting first = saveReservationWaiting("brown", date, time, theme);
         saveReservationWaiting("pobi", date, time, theme);
@@ -269,7 +269,7 @@ class JdbcReservationWaitingRepositoryTest {
     void deleteByIdTest() {
         // given
         ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com");
+       Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
         ReservationWaiting saved = saveReservationWaiting("brown", LocalDate.of(2024, 5, 1), time, theme);
 
         // when

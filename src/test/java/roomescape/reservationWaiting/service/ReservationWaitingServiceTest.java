@@ -73,7 +73,7 @@ class ReservationWaitingServiceTest {
         when(reservationTimeRepository.findById(any()))
                 .thenReturn(Optional.of(time));
 
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
 
         when(themeRepository.findById(any()))
                 .thenReturn(Optional.of(theme));
@@ -161,7 +161,7 @@ class ReservationWaitingServiceTest {
                 .thenReturn(Optional.of(new ReservationTime(1L, LocalTime.of(10, 0))));
 
         when(themeRepository.findById(any()))
-                .thenReturn(Optional.of(new Theme(1L, "이름", "설명", "thumbnailUrl")));
+                .thenReturn(Optional.of(new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L)));
 
         when(reservationRepository.findByDateAndTimeIdAndThemeIdForUpdate(
                 any(), any(), any())
@@ -187,7 +187,7 @@ class ReservationWaitingServiceTest {
         when(reservationTimeRepository.findById(any()))
                 .thenReturn(Optional.of(time));
 
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
 
         when(themeRepository.findById(any()))
                 .thenReturn(Optional.of(theme));
@@ -209,7 +209,7 @@ class ReservationWaitingServiceTest {
     void deleteReservationWaitingByIdTest_success() {
         // given
         ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
 
         when(reservationWaitingRepository.findById(any())).thenReturn(
                 Optional.of(new ReservationWaiting(
@@ -239,7 +239,7 @@ class ReservationWaitingServiceTest {
     void deleteReservationWaitingByIdTest_invalid_date() {
         // given
         ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
         when(reservationWaitingRepository.findById(any())).thenReturn(
                 Optional.of(new ReservationWaiting(
                         1L, "brown", LocalDate.of(2026, 5, 1), time, theme
@@ -259,7 +259,7 @@ class ReservationWaitingServiceTest {
     void deleteReservationWaitingByIdTest_unauthorized() {
         // given
         ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
 
         when(reservationWaitingRepository.findById(any())).thenReturn(
                 Optional.of(new ReservationWaiting(
@@ -276,7 +276,7 @@ class ReservationWaitingServiceTest {
     void promoteWaitingTest_success() {
         //given
         ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
         LocalDate date = LocalDate.of(2026, 5, 15);
         ReservationWaiting waiting = new ReservationWaiting(1L, "pobi", date, time, theme);
 
@@ -321,7 +321,7 @@ class ReservationWaitingServiceTest {
     void promoteWaitingTest_unauthorized() {
         //given
         ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
         LocalDate date = LocalDate.of(2026, 5, 15);
 
         when(reservationWaitingRepository.findById(1L))
@@ -337,7 +337,7 @@ class ReservationWaitingServiceTest {
     void promoteWaitingTest_not_first_in_queue() {
         //given
         ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
         LocalDate date = LocalDate.of(2026, 5, 15);
         ReservationWaiting waiting = new ReservationWaiting(2L, "pobi", date, time, theme);
         ReservationWaiting first = new ReservationWaiting(1L, "brown", date, time, theme);

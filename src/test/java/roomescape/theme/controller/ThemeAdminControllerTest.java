@@ -30,13 +30,14 @@ class ThemeAdminControllerTest {
     void createTheme_success() throws Exception {
         //given
         when( themeService.registerTheme(any()))
-                .thenReturn(new Theme(1L, "테마", "설명", "url"));
+                .thenReturn(new Theme(1L, "테마", "설명", "url", 1000L));
 
         String body = """
                 {
                     "name": "테마",
                     "description": "설명",
-                    "thumbnailUrl": "url"
+                    "thumbnailUrl": "url",
+                    "amount": 1000
                 }
                 """;
 
@@ -53,26 +54,37 @@ class ThemeAdminControllerTest {
     void createTheme_no_field() throws Exception {
         //given
         when( themeService.registerTheme(any()))
-                .thenReturn(new Theme(1L, "테마", "설명", "url"));
+                .thenReturn(new Theme(1L, "테마", "설명", "url", 100L));
 
         String noName = """
                 {
                     "description": "설명",
-                    "thumbnailUrl": "url"
+                    "thumbnailUrl": "url",
+                    "amount": 1000L
                 }
                 """;
 
         String noDescription = """
                 {
                     "name": "테마",
-                    "thumbnailUrl": "url"
+                    "thumbnailUrl": "url",
+                    "amount": 1000L
                 }
                 """;
 
         String noThumbnailUrl = """
                 {
                     "name": "테마",
-                    "description": "설명"
+                    "description": "설명",
+                    "amount": 1000L
+                }
+                """;
+
+        String noAmount = """
+                {
+                    "name": "테마",
+                    "description": "설명",
+                    "thumbnailUrl": "url"
                 }
                 """;
 
@@ -94,6 +106,12 @@ class ThemeAdminControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(noThumbnailUrl)
         ).andExpect(status().isBadRequest());
+
+        mockMvc.perform(
+                post("/admin/themes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(noAmount)
+        ).andExpect(status().isBadRequest());
     }
 
     @DisplayName("테마 생성 시, 필드가 하나라도 형식이 유효하지 않으면 400을 반환한다.")
@@ -101,13 +119,14 @@ class ThemeAdminControllerTest {
     void createTheme_invalid_field() throws Exception {
         //given
         when( themeService.registerTheme(any()))
-                .thenReturn(new Theme(1L, "테마", "설명", "url"));
+                .thenReturn(new Theme(1L, "테마", "설명", "url", 1000L));
 
         String invalidName = """
                 {
                     "name": "",
                     "description": "설명",
-                    "thumbnailUrl": "url"
+                    "thumbnailUrl": "url",
+                     "amount": 1000L
                 }
                 """;
 
@@ -115,7 +134,8 @@ class ThemeAdminControllerTest {
                 {
                     "name": "테마",
                     "description": "",
-                    "thumbnailUrl": "url"
+                    "thumbnailUrl": "url",
+                     "amount": 1000L
                 }
                 """;
 
@@ -123,7 +143,8 @@ class ThemeAdminControllerTest {
                 {
                     "name": "테마",
                     "description": "설명",
-                    "thumbnailUrl": ""
+                    "thumbnailUrl": "",
+                     "amount": 1000L
                 }
                 """;
 

@@ -25,7 +25,7 @@ public class ThemeServiceIntegrationTest extends ServiceIntegrationTest {
         List<ConcurrentResult> results = ConcurrentExecutor.executeConcurrently(100, () -> {
             try {
                 themeService.registerTheme(new ThemeCommand(
-                        "테마", "설명", "url"
+                        "테마", "설명", "url", 1000L
                 ));
 
                 return ConcurrentResult.withSuccess();
@@ -52,7 +52,7 @@ public class ThemeServiceIntegrationTest extends ServiceIntegrationTest {
                 new ThemeCommand(
                         "우주선 탈출",
                         "고장 난 우주선에서 제한 시간 안에 탈출하세요.",
-                        "https://example.com/themes/space-escape.jpg"
+                        "https://example.com/themes/space-escape.jpg", 1000L
                 )
         );
 

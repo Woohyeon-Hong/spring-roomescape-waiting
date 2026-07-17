@@ -80,8 +80,8 @@ class JdbcReservationTimeRepositoryTest {
         //given
         ReservationTime time = createTime(LocalTime.of(10, 0));
 
-        Long themeId = createTheme();
-        createReservation(time, LocalDate.of(2026, 5, 6), themeId);
+        Long themeId = createTheme("테마", "설명", "url", 1000L);
+        createReservation("brown", time, LocalDate.of(2026, 5, 6), themeId);
 
         //when & then
         assertThatThrownBy(
@@ -142,8 +142,8 @@ class JdbcReservationTimeRepositoryTest {
 
         LocalDate date = LocalDate.of(2025, 1, 1);
 
-        Long themeId = createTheme();
-        createReservation(time1, date, themeId);
+        Long themeId = createTheme("테마", "설명", "url", 1000L);
+        createReservation("brown", time1, date, themeId);
 
         // when
         List<AvailableTimeQueryResult> result = reservationTimeRepository.findAvailableTimes(themeId, date);
@@ -168,9 +168,9 @@ class JdbcReservationTimeRepositoryTest {
 
         LocalDate date = LocalDate.of(2025, 1, 1);
 
-        Long themeId = createTheme();
-        createReservationWaiting(time1, date, themeId);
-        createReservation(time2, date, themeId);
+        Long themeId = createTheme("테마", "설명", "url", 1000L);;
+        createReservationWaiting("brown", time1, date, themeId);
+        createReservation("brown", time2, date, themeId);
 
         // when
         List<AvailableTimeQueryResult> result = reservationTimeRepository.findAvailableTimes(themeId, date);
@@ -189,31 +189,33 @@ class JdbcReservationTimeRepositoryTest {
         );
     }
 
-    private Long createTheme() {
-        jdbcTemplate.update(
-                "insert into theme(name, description, thumbnail_url) values ('테마', '설명', 'url')"
+    private Long createTheme(String name, String description, String thumbnailUrl, Long amount) {
+        jdbcTemplate.update("""
+            insert into theme(name, description, thumbnail_url, amount)
+            values (?, ?, ?, ?)
+        """, name, description, thumbnailUrl, amount
         );
 
         return jdbcTemplate.queryForObject(
                 "SELECT id FROM theme WHERE name = ?",
                 Long.class,
-                "테마"
+                name
         );
     }
 
-    private void createReservation(ReservationTime time, LocalDate date, Long themeId) {
+    private void createReservation(String name, ReservationTime time, LocalDate date, Long themeId) {
         jdbcTemplate.update("""
             insert into reservation(name, reservation_date, time_id, theme_id)
             values (?, ?, ?, ?)
-        """, "brown", date, time.getId(), themeId
+        """, name, date, time.getId(), themeId
         );
     }
 
-    private void createReservationWaiting(ReservationTime time, LocalDate date, Long themeId) {
+    private void createReservationWaiting(String name, ReservationTime time, LocalDate date, Long themeId) {
         jdbcTemplate.update("""
             insert into reservation_waiting(name, reservation_date, time_id, theme_id)
             values (?, ?, ?, ?)
-        """, "brown", date, time.getId(), themeId
+        """, name, date, time.getId(), themeId
         );
     }
 }

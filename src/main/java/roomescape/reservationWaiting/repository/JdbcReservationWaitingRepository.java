@@ -27,7 +27,8 @@ public class JdbcReservationWaitingRepository implements ReservationWaitingRepos
                 resultSet.getLong("theme_id"),
                 resultSet.getString("theme_name"),
                 resultSet.getString("theme_description"),
-                resultSet.getString("theme_thumbnail_url")
+                resultSet.getString("theme_thumbnail_url"),
+                resultSet.getLong("theme_amount")
         );
 
         return new ReservationWaiting(
@@ -78,7 +79,8 @@ public class JdbcReservationWaitingRepository implements ReservationWaitingRepos
                        h.id AS theme_id,
                        h.name AS theme_name,
                        h.description AS theme_description,
-                       h.thumbnail_url AS theme_thumbnail_url
+                       h.thumbnail_url AS theme_thumbnail_url,
+                       h.amount AS theme_amount
                 FROM reservation_waiting r
                 INNER JOIN reservation_time t
                   ON r.time_id = t.id
@@ -102,7 +104,8 @@ public class JdbcReservationWaitingRepository implements ReservationWaitingRepos
                        h.id AS theme_id,
                        h.name AS theme_name,
                        h.description AS theme_description,
-                       h.thumbnail_url AS theme_thumbnail_url
+                       h.thumbnail_url AS theme_thumbnail_url,
+                       h.amount AS theme_amount
                 FROM reservation_waiting r
                 INNER JOIN reservation_time t
                   ON r.time_id = t.id
@@ -139,7 +142,8 @@ public class JdbcReservationWaitingRepository implements ReservationWaitingRepos
                        h.id AS theme_id,
                        h.name AS theme_name,
                        h.description AS theme_description,
-                       h.thumbnail_url AS theme_thumbnail_url
+                       h.thumbnail_url AS theme_thumbnail_url,
+                       h.amount AS theme_amount
                 FROM reservation_waiting r
                 INNER JOIN reservation_time t
                   ON r.time_id = t.id
@@ -166,7 +170,8 @@ public class JdbcReservationWaitingRepository implements ReservationWaitingRepos
                        h.id AS theme_id,
                        h.name AS theme_name,
                        h.description AS theme_description,
-                       h.thumbnail_url AS theme_thumbnail_url
+                       h.thumbnail_url AS theme_thumbnail_url,
+                       h.amount AS theme_amount
                 FROM reservation_waiting r
                 INNER JOIN reservation_time t
                   ON r.time_id = t.id

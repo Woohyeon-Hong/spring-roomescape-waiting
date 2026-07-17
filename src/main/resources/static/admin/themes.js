@@ -31,6 +31,7 @@ function renderThemes(themes) {
       <div class="card-body">
         <h3>${theme.name}</h3>
         <p>${theme.description}</p>
+        <p>${theme.amount?.toLocaleString() ?? "-"}원</p>
         <button class="danger" data-id="${theme.id}">삭제</button>
       </div>
     `;
@@ -52,7 +53,8 @@ $("#themeForm").addEventListener("submit", async (event) => {
       body: JSON.stringify({
         name: form.get("name"),
         description: form.get("description"),
-        thumbnailUrl: form.get("thumbnailUrl")
+        thumbnailUrl: form.get("thumbnailUrl"),
+        amount: Number(form.get("amount"))
       })
     });
     event.target.reset();

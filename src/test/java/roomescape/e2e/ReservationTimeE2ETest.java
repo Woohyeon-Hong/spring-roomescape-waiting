@@ -22,7 +22,8 @@ public class ReservationTimeE2ETest extends E2ETest {
         Map<String, Object> requestBody = Map.of(
                 "name", "테마",
                 "description", "설명",
-                "thumbnailUrl", "url"
+                "thumbnailUrl", "url",
+                "amount", 1000L
         );
 
         RestAssured.given().log().all()
@@ -58,8 +59,8 @@ public class ReservationTimeE2ETest extends E2ETest {
         createReservationTime("12:00");
         createReservationTime("13:00");
 
-        createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/image.png");
-        createTheme("페어 테마", "페어 전용 테마입니다.", "https://example.com/pair.png");
+        createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/image.png", 1000L);
+        createTheme("페어 테마", "페어 전용 테마입니다.", "https://example.com/pair.png", 1000L);
 
         List<ReservationTime> beforeReservationResults = getAvailableTimes(LocalDate.of(2026, 5, 5), 1L);
 

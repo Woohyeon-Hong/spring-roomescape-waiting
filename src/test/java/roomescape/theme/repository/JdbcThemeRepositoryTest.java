@@ -33,7 +33,7 @@ class JdbcThemeRepositoryTest {
     @DisplayName("새로운 테마를 저장하고 반환된 객체의 ID를 확인한다.")
     void saveTest() {
         // given
-        Theme theme = Theme.of("테마", "설명", "thumbnailUrl");
+        Theme theme = Theme.of("테마", "설명", "thumbnailUrl", 1000L);
 
         // when
         Theme saved = themeRepository.save(theme);
@@ -49,10 +49,10 @@ class JdbcThemeRepositoryTest {
     @DisplayName("기존에 이미 테마 이름이 겹치는 테마가 있으면 예외가 발생한다.")
     void saveTest_duplicate() {
         // given
-        themeRepository.save(Theme.of("테마", "설명", "thumbnailUrl"));
+        themeRepository.save(Theme.of("테마", "설명", "thumbnailUrl", 1000L));
 
         // when & then
-        assertThatThrownBy(() -> themeRepository.save(Theme.of("테마", "other", "otherThumbnailUrl")))
+        assertThatThrownBy(() -> themeRepository.save(Theme.of("테마", "other", "otherThumbnailUrl", 1000L)))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -72,7 +72,7 @@ class JdbcThemeRepositoryTest {
         );
 
         themeRepository.save(
-                Theme.of("테마", "테마 설명", "썸네일_url")
+                Theme.of("테마", "테마 설명", "썸네일_url", 1000L)
         );
 
         Long themeId = jdbcTemplate.queryForObject(
@@ -98,7 +98,7 @@ class JdbcThemeRepositoryTest {
     void existByName() {
         //given
         themeRepository.save(
-                Theme.of("테마", "테마 설명", "썸네일_url")
+                Theme.of("테마", "테마 설명", "썸네일_url", 1000L)
         );
 
         //when & then
@@ -114,7 +114,7 @@ class JdbcThemeRepositoryTest {
     @DisplayName("ID를 통해 저장된 테마를 조회한다.")
     void findByIdTest() {
         // given
-        Theme saved = themeRepository.save(Theme.of("테마", "설명", "thumbnailUrl"));
+        Theme saved = themeRepository.save(Theme.of("테마", "설명", "thumbnailUrl", 1000L));
 
         // when
         Theme found = themeRepository.findById(saved.getId())
@@ -132,8 +132,8 @@ class JdbcThemeRepositoryTest {
     @DisplayName("존재하는 모든 테마 목록을 리스트로 조회한다.")
     void findAllTest() {
         // given
-        Theme saved1 = themeRepository.save(Theme.of("테마1", "설명", "thumbnailUrl"));
-        Theme saved2 = themeRepository.save(Theme.of("테마2", "설명", "thumbnailUrl"));
+        Theme saved1 = themeRepository.save(Theme.of("테마1", "설명", "thumbnailUrl", 1000L));
+        Theme saved2 = themeRepository.save(Theme.of("테마2", "설명", "thumbnailUrl", 1000L));
 
         // when
         List<Theme> result = themeRepository.findAll();

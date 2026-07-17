@@ -73,7 +73,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
         );
         themeService.registerTheme(
                 new ThemeCommand(
-                        "테마", "설명", "url"
+                        "테마", "설명", "url", 1000L
                 )
         );
 
@@ -121,7 +121,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
         );
         themeService.registerTheme(
                 new ThemeCommand(
-                        "테마", "설명", "url"
+                        "테마", "설명", "url", 1000L
                 )
         );
 
@@ -191,7 +191,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
         );
         themeService.registerTheme(
                 new ThemeCommand(
-                        "테마", "설명", "url"
+                        "테마", "설명", "url", 1000L
                 )
         );
 
@@ -254,7 +254,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
         );
         themeService.registerTheme(
                 new ThemeCommand(
-                        "테마", "설명", "url"
+                        "테마", "설명", "url", 1000L
                 )
         );
 
@@ -300,7 +300,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
         );
         themeService.registerTheme(
                 new ThemeCommand(
-                        "테마", "설명", "url"
+                        "테마", "설명", "url", 1000L
                 )
         );
 
@@ -337,7 +337,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
         );
         themeService.registerTheme(
                 new ThemeCommand(
-                        "테마", "설명", "url"
+                        "테마", "설명", "url", 1000L
                 )
         );
 
@@ -384,7 +384,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
         );
         themeService.registerTheme(
                 new ThemeCommand(
-                        "테마", "설명", "url"
+                        "테마", "설명", "url", 1000L
                 )
         );
 

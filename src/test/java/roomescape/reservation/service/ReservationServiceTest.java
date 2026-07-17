@@ -187,7 +187,7 @@ class ReservationServiceTest {
         when(reservationTimeRepository.findById(any()))
                 .thenReturn(Optional.of(time));
 
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
         when(themeRepository.findById(any()))
                 .thenReturn(Optional.of(theme));
 
@@ -220,7 +220,7 @@ class ReservationServiceTest {
                                 "brown",
                                 LocalDate.of(2026, 5, 15),
                                 new ReservationTime(1L, LocalTime.of(10, 0)),
-                                new Theme(1L, "이름", "설명", "thumbnailUrl"),
+                                new Theme(1L, "이름", "설명", "thumbnailUrl", null),
                                 "reserved",
                                 0L
                         ), new ReservationWithStatusResult(
@@ -228,7 +228,7 @@ class ReservationServiceTest {
                                 "brown",
                                 LocalDate.of(2026, 5, 15),
                                 new ReservationTime(2L, LocalTime.of(11, 0)),
-                                new Theme(1L, "이름", "설명", "thumbnailUrl"),
+                                new Theme(1L, "이름", "설명", "thumbnailUrl", null),
                                 "waiting",
                                 1L
                         )
@@ -246,7 +246,7 @@ class ReservationServiceTest {
                                 "brown",
                                 LocalDate.of(2026, 5, 15),
                                 new ReservationTime(1L, LocalTime.of(10, 0)),
-                                new Theme(1L, "이름", "설명", "thumbnailUrl"),
+                                new Theme(1L, "이름", "설명", "thumbnailUrl", null),
                                 "reserved",
                                 0L
                         ), new ReservationWithStatusResult(
@@ -254,7 +254,7 @@ class ReservationServiceTest {
                                 "brown",
                                 LocalDate.of(2026, 5, 15),
                                 new ReservationTime(2L, LocalTime.of(11, 0)),
-                                new Theme(1L, "이름", "설명", "thumbnailUrl"),
+                                new Theme(1L, "이름", "설명", "thumbnailUrl", null),
                                 "waiting",
                                 1L
                         )
@@ -281,7 +281,8 @@ class ReservationServiceTest {
                                 1L,
                                 "테마",
                                 "설명",
-                                "url"
+                                "url",
+                                1000L
                         )
                 )
         );
@@ -296,7 +297,8 @@ class ReservationServiceTest {
                                 1L,
                                 "테마",
                                 "설명",
-                                "url")
+                                "url",
+                                1000L)
                 ),
                 () -> verify(reservationRepository).findPopularThemes(
                         LocalDate.of(2026, 5, 1),
@@ -312,7 +314,7 @@ class ReservationServiceTest {
         //given
         ReservationTime originalTime = new ReservationTime(1L, LocalTime.of(10, 0));
         ReservationTime updatedTime = new ReservationTime(2L, LocalTime.of(11, 0));
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
         LocalDate originalDate = LocalDate.of(2026, 5, 15);
         LocalDate updatedDate = LocalDate.of(2026, 5, 16);
 
@@ -361,7 +363,7 @@ class ReservationServiceTest {
     void updateReservationTest_unAuthorized() {
         //given
         ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
         LocalDate date = LocalDate.of(2026, 5, 15);
 
         when(reservationRepository.findByIdForUpdate(any()))
@@ -404,7 +406,7 @@ class ReservationServiceTest {
                         "brown",
                         LocalDate.of(2026, 5, 16),
                         new ReservationTime(1L, LocalTime.of(11, 0)),
-                        new Theme(1L, "이름", "설명", "thumbnailUrl"), null
+                        new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L), null
                 )));
 
         doThrow(InvalidReservationDateValueException.class)
@@ -427,7 +429,7 @@ class ReservationServiceTest {
                         "brown",
                         LocalDate.of(2026, 5, 16),
                         new ReservationTime(1L, LocalTime.of(11, 0)),
-                        new Theme(1L, "이름", "설명", "thumbnailUrl"), null
+                        new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L), null
                 )));
 
         when(reservationTimeRepository.findById(any()))
@@ -449,7 +451,7 @@ class ReservationServiceTest {
                         "brown",
                         LocalDate.of(2026, 5, 16),
                         new ReservationTime(1L, LocalTime.of(11, 0)),
-                        new Theme(1L, "이름", "설명", "thumbnailUrl"), null
+                        new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L), null
                 )));
 
         doThrow(InvalidTimeStartAtValueException.class)
@@ -472,7 +474,7 @@ class ReservationServiceTest {
                         "brown",
                         LocalDate.of(2026, 5, 16),
                         new ReservationTime(1L, LocalTime.of(11, 0)),
-                        new Theme(1L, "이름", "설명", "thumbnailUrl"), null
+                        new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L), null
                 )));
 
         when(reservationTimeRepository.findById(any()))
@@ -507,7 +509,7 @@ class ReservationServiceTest {
                         "brown",
                         LocalDate.of(2026, 5, 15),
                         new ReservationTime(1L, LocalTime.of(10, 0)),
-                        new Theme(1L, "이름", "설명", "thumbnailUrl"), null
+                        new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L), null
                 )));
 
         when(reservationTimeRepository.findById(any()))
@@ -534,7 +536,7 @@ class ReservationServiceTest {
                         "brown",
                         LocalDate.of(2026, 5, 15),
                         new ReservationTime(1L, LocalTime.of(10, 0)),
-                        new Theme(1L, "이름", "설명", "thumbnailUrl"), null
+                        new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L), null
                 )));
 
         when(reservationTimeRepository.findById(any()))
@@ -574,7 +576,7 @@ class ReservationServiceTest {
                         "brown",
                         LocalDate.of(2026, 5, 15),
                         new ReservationTime(1L, LocalTime.of(10, 0)),
-                        new Theme(1L, "이름", "설명", "thumbnailUrl"), null
+                        new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L), null
                 )));
 
         when(reservationRepository.deleteById(any()))
@@ -597,7 +599,7 @@ class ReservationServiceTest {
     void deleteReservationByIdTest_with_authorization_success() {
         //given
         ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
         LocalDate date = LocalDate.of(2026, 5, 15);
 
         when(reservationRepository.findByIdForUpdate(any()))
@@ -629,7 +631,7 @@ class ReservationServiceTest {
     void deleteReservationByIdTest_unAuthorized() {
         //given
         ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
         LocalDate date = LocalDate.of(2026, 5, 15);
 
         when(reservationRepository.findByIdForUpdate(any()))
@@ -651,7 +653,7 @@ class ReservationServiceTest {
     void deleteReservationByIdTest_expired() {
         //given
         ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl");
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
         LocalDate date = LocalDate.of(2026, 5, 15);
 
         when(reservationRepository.findByIdForUpdate(any()))

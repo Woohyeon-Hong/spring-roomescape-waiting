@@ -30,7 +30,8 @@ public class ThemeService {
                     Theme.of(
                             command.name(),
                             command.description(),
-                            command.thumbnailUrl()
+                            command.thumbnailUrl(),
+                            command.amount()
                     )
             );
         } catch (DuplicateKeyException e) {
