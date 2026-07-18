@@ -16,10 +16,10 @@
 
 ### 3. successUrl 콜백 — 금액 검증 후 승인
 
-- [ ] 콜백으로 넘어온 `amount`를 **그대로 믿지 않고** 주문 저장 금액과 대조한다.
-- [ ] 다르면 `PaymentAmountMismatch`류 예외로 **승인 호출 전에 차단**한다.
-- [ ] 일치하면 승인 API를 호출한다.
-- [ ] 승인 API가 성공하면, 이후 조회·취소에 필요한 `paymentKey`를 **DB에 저장**하고 예약을 **CONFIRMED**로 바꾼다.
+- [x] 콜백으로 넘어온 `amount`를 **그대로 믿지 않고** 주문 저장 금액과 대조한다.
+- [x] 다르면 `PaymentAmountMismatch`류 예외로 **승인 호출 전에 차단**한다.
+- [x] 일치하면 승인 API를 호출한다.
+- [x] 승인 API가 성공하면, 이후 조회·취소에 필요한 `paymentKey`를 **DB에 저장**하고 예약을 **CONFIRMED**로 바꾼다.
 
 ### 4. 결제 승인 API 호출 (`RestClient`)
 

@@ -23,7 +23,8 @@ CREATE TABLE orders (
     id                 BIGINT           NOT NULL AUTO_INCREMENT,
     order_id           VARCHAR(255)     NOT NULL UNIQUE,
     amount             VARCHAR(255)     NOT NULL,
-    is_confirmed        BOOLEAN          NOT NULL DEFAULT FALSE,
+    is_confirmed       BOOLEAN          NOT NULL DEFAULT FALSE,
+    payment_key        VARCHAR(255),
     PRIMARY KEY (id)
 );
 

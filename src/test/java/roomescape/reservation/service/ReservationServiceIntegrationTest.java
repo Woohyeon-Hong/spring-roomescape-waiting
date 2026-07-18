@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import roomescape.order.domain.Order;
+import roomescape.order.repository.OrderRepository;
 import roomescape.order.service.OrderService;
 import roomescape.reservation.exception.DuplicateReservationException;
 import roomescape.reservation.exception.ReservationNotFoundException;
@@ -38,6 +39,9 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
     @Autowired
     OrderService orderService;
 
+    @Autowired
+    OrderRepository orderRepository;
+
     @DisplayName("동일한 예약 요청이 동시에 들어오면 하나만 성공하고 나머지는 중복 예외가 발생한다")
     @Test
     void makeReservationTest_duplicate() throws InterruptedException {
@@ -51,7 +55,7 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
                 )
         );
         Order order = orderService.makeOrder(1000L);
-        orderService.confirm(order.getOrderId());
+        orderRepository.confirmByOrderId(order.getOrderId(), "test-payment-key");
 
         //when
         List<ConcurrentResult> results = ConcurrentExecutor.executeConcurrently(100, () -> {
@@ -99,9 +103,9 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
                 )
         );
         Order order1 = orderService.makeOrder(1000L);
-        orderService.confirm(order1.getOrderId());
+        orderRepository.confirmByOrderId(order1.getOrderId(), "test-payment-key");
         Order order2 = orderService.makeOrder(1000L);
-        orderService.confirm(order2.getOrderId());
+        orderRepository.confirmByOrderId(order2.getOrderId(), "test-payment-key");
 
         reservationService.makeReservation(
                 new ReservationCommand(
@@ -156,7 +160,7 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
                 )
         );
         Order order = orderService.makeOrder(1000L);
-        orderService.confirm(order.getOrderId());
+        orderRepository.confirmByOrderId(order.getOrderId(), "test-payment-key");
 
         reservationService.makeReservation(
                 new ReservationCommand(
@@ -198,7 +202,7 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
                 )
         );
         Order order = orderService.makeOrder(1000L);
-        orderService.confirm(order.getOrderId());
+        orderRepository.confirmByOrderId(order.getOrderId(), "test-payment-key");
 
         reservationService.makeReservation(
                 new ReservationCommand(

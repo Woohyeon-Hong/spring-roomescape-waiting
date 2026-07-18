@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import roomescape.order.controller.dto.OrderRequest;
 import roomescape.order.controller.dto.OrderResponse;
+import roomescape.order.controller.dto.PaymentConfirmRequest;
 import roomescape.order.domain.Order;
 import roomescape.order.service.OrderService;
 
@@ -31,10 +32,12 @@ public class OrderController {
                 .body(response);
     }
 
-    // ponytail: 실제 토스 결제 승인(paymentKey 검증) 없이 바로 확정 처리 — 결제 연동 붙을 때 교체
     @PostMapping("/{orderId}/confirm")
-    public ResponseEntity<Void> confirmOrder(@PathVariable String orderId) {
-        orderService.confirm(orderId);
+    public ResponseEntity<Void> confirmOrder(
+            @PathVariable String orderId,
+            @Valid @RequestBody PaymentConfirmRequest request
+    ) {
+        orderService.confirm(orderId, request.paymentKey(), request.amount());
         return ResponseEntity.noContent().build();
     }
 }

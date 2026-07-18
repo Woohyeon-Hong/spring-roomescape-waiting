@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-  <title>결제 인증 완료 - Roomescape</title>
+  <title>결제 확인 - Roomescape</title>
   <link href="https://fonts.googleapis.com" rel="preconnect">
   <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -13,17 +13,28 @@
 <main class="page">
   <header class="hero">
     <p class="eyebrow">ROOMESCAPE</p>
-    <h1>결제 인증 완료</h1>
-    <p>토스페이먼츠에서 카드 인증까지 마쳤습니다. 예약 승인은 다음 단계에서 처리됩니다.</p>
-    <p><a class="admin-link" href="/index.html">사용자 예약 페이지로 돌아가기</a></p>
+    <h1 id="resultTitle">결제 확인 중</h1>
+    <p id="resultDescription">카드 인증이 끝났습니다. 결제 승인과 예약 확정을 처리하고 있어요.</p>
   </header>
 
   <section class="panel">
-    <h2>인증 결과</h2>
-    <div class="success-box" id="paymentResult" role="status"></div>
+    <h2>처리 결과</h2>
+
+    <div class="loading-box" id="loadingState" role="status" aria-busy="true">
+      <span class="spinner" aria-hidden="true"></span>
+      <span>확인 중입니다...</span>
+    </div>
+
+    <div class="success-box" id="successState" hidden role="status">
+      <span class="reservation-text" id="successDetail"></span>
+    </div>
+
+    <div class="failure-box" id="failureState" hidden role="alert">
+      <span class="reservation-text" id="failureDetail"></span>
+    </div>
   </section>
 
-  <p class="message" id="message"></p>
+  <p><a class="admin-link" href="/index.html">사용자 예약 페이지로 돌아가기</a></p>
 </main>
 <script src="/payment-success.js"></script>
 </body>

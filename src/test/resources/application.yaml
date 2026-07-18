@@ -8,3 +8,6 @@ spring:
 
   clock:
     zone: Asia/Seoul
+
+toss:
+  secret-key: test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R

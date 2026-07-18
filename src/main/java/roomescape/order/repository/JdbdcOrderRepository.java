@@ -73,14 +73,14 @@ public class JdbdcOrderRepository implements OrderRepository{
     }
 
     @Override
-    public void confirmByOrderId(String orderId) {
+    public void confirmByOrderId(String orderId, String paymentKey) {
         String sql = """
                UPDATE orders
-               SET is_confirmed = true
+               SET is_confirmed = true, payment_key = ?
                WHERE order_id = ?
                """;
 
-        int affectedRow = jdbcTemplate.update(sql, orderId);
+        int affectedRow = jdbcTemplate.update(sql, paymentKey, orderId);
 
         if (affectedRow == 0) {
             throw new OrderNotFoundException();

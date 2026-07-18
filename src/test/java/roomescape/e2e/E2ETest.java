@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import roomescape.e2e.E2ETest.WebConfig;
+import roomescape.order.repository.OrderRepository;
 import roomescape.support.DatabaseHelper;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -30,6 +31,9 @@ public abstract class E2ETest {
 
     @Autowired
     MutableClock clock;
+
+    @Autowired
+    OrderRepository orderRepository;
 
     @LocalServerPort
     int port;
@@ -76,9 +80,8 @@ public abstract class E2ETest {
                 .then().statusCode(201)
                 .extract().path("orderId");
 
-        RestAssured.given()
-                .when().post("/orders/{orderId}/confirm", orderId)
-                .then().statusCode(204);
+        // 실제 카드 인증 없이는 토스 승인 API를 통과할 수 없어, E2E 픽스처는 HTTP 대신 저장소로 바로 확정한다.
+        orderRepository.confirmByOrderId(orderId, "test-payment-key");
 
         return orderId;
     }

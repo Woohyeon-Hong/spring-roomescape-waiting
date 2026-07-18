@@ -88,7 +88,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                 )
         );
         Order order = orderService.makeOrder(1000L);
-        orderService.confirm(order.getOrderId());
+        orderRepository.confirmByOrderId(order.getOrderId(), "test-payment-key");
 
         reservationService.makeReservation(
                 new ReservationCommand(
@@ -138,7 +138,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                 )
         );
         Order order = orderService.makeOrder(1000L);
-        orderService.confirm(order.getOrderId());
+        orderRepository.confirmByOrderId(order.getOrderId(), "test-payment-key");
 
         reservationService.makeReservation(
                 new ReservationCommand(
@@ -210,7 +210,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                 )
         );
         Order order = orderService.makeOrder(1000L);
-        orderService.confirm(order.getOrderId());
+        orderRepository.confirmByOrderId(order.getOrderId(), "test-payment-key");
 
         reservationService.makeReservation(
                 new ReservationCommand(
@@ -275,7 +275,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                 )
         );
         Order order = orderService.makeOrder(1000L);
-        orderService.confirm(order.getOrderId());
+        orderRepository.confirmByOrderId(order.getOrderId(), "test-payment-key");
 
         reservationService.makeReservation(
                 new ReservationCommand(
@@ -323,7 +323,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                 )
         );
         Order reservationOrder = orderService.makeOrder(1000L);
-        orderService.confirm(reservationOrder.getOrderId());
+        orderRepository.confirmByOrderId(reservationOrder.getOrderId(), "test-payment-key");
 
         reservationService.makeReservation(
                 new ReservationCommand(
@@ -339,7 +339,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
         reservationService.deleteReservationById(RESERVATION_ID);
 
         Order promotionOrder = orderService.makeOrder(1000L);
-        orderService.confirm(promotionOrder.getOrderId());
+        orderRepository.confirmByOrderId(promotionOrder.getOrderId(), "test-payment-key");
 
         doThrow(new DuplicateKeyException("duplicate"))
                 .when(reservationRepository)
@@ -365,7 +365,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                 )
         );
         Order order = orderService.makeOrder(1000L);
-        orderService.confirm(order.getOrderId());
+        orderRepository.confirmByOrderId(order.getOrderId(), "test-payment-key");
 
         reservationService.makeReservation(
                 new ReservationCommand(
@@ -400,7 +400,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                 )
         );
         Order order = orderService.makeOrder(1000L);
-        orderService.confirm(order.getOrderId());
+        orderRepository.confirmByOrderId(order.getOrderId(), "test-payment-key");
 
         reservationService.makeReservation(
                 new ReservationCommand(
@@ -437,7 +437,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                 )
         );
         Order order = orderService.makeOrder(1000L);
-        orderService.confirm(order.getOrderId());
+        orderRepository.confirmByOrderId(order.getOrderId(), "test-payment-key");
 
         reservationService.makeReservation(
                 new ReservationCommand(
@@ -453,7 +453,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
         reservationService.deleteReservationById(RESERVATION_ID);
 
         Order promotionOrder = orderService.makeOrder(1000L);
-        orderService.confirm(promotionOrder.getOrderId());
+        orderRepository.confirmByOrderId(promotionOrder.getOrderId(), "test-payment-key");
 
         //when
         List<ConcurrentResult> results = ConcurrentExecutor.executeConcurrently(10, () -> {
@@ -489,7 +489,7 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                 )
         );
         Order order = orderService.makeOrder(1000L);
-        orderService.confirm(order.getOrderId());
+        orderRepository.confirmByOrderId(order.getOrderId(), "test-payment-key");
 
         reservationService.makeReservation(
                 new ReservationCommand(

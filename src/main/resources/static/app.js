@@ -182,8 +182,16 @@ async function createOrder(amount) {
 
 // 카드 정보는 결제창(토스 도메인)에서 카드사가 직접 처리한다 — 이 서버/클라이언트는 카드번호를 절대 다루지 않는다.
 // 인증 성공 시 브라우저가 successUrl로 이동하므로, 이 함수 호출 이후 코드는 실행되지 않는다.
-async function requestTossPayment({ orderId, amount, orderName, customerName }) {
+// successUrl에는 토스가 붙여주는 paymentKey/orderId/amount 외에, 결제창으로 넘어가며 끊긴
+// 예약 정보(예약자/날짜/시간/테마)를 되돌려받기 위한 파라미터를 직접 실어 보낸다.
+async function requestTossPayment({ orderId, amount, orderName, customerName, reservation }) {
   const payment = tossPayments.payment({ customerKey: "ANONYMOUS" });
+
+  const successUrl = new URL("/payment-success.html", window.location.origin);
+  successUrl.searchParams.set("name", reservation.name);
+  successUrl.searchParams.set("date", reservation.date);
+  successUrl.searchParams.set("timeId", reservation.timeId);
+  successUrl.searchParams.set("themeId", reservation.themeId);
 
   await payment.requestPayment({
     method: "CARD",
@@ -191,7 +199,7 @@ async function requestTossPayment({ orderId, amount, orderName, customerName }) 
     orderId,
     orderName,
     customerName,
-    successUrl: `${window.location.origin}/payment-success.html`,
+    successUrl: successUrl.toString(),
     failUrl: `${window.location.origin}/payment-fail.html`
   });
 }
@@ -294,7 +302,8 @@ $("#availableTimes").addEventListener("click", async (event) => {
       orderId: order.orderId,
       amount: order.amount,
       orderName: `${theme?.name ?? "테마"} 예약`,
-      customerName: name
+      customerName: name,
+      reservation: { name, date, timeId: button.dataset.timeId, themeId }
     });
   } catch (error) {
     setMessage(error.message);
