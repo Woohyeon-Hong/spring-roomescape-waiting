@@ -30,9 +30,9 @@
 
 ### 5. 관심사 분리 — 포트 & 어댑터
 
-- [ ] 도메인/애플리케이션 계층에 `PaymentGateway` **포트**와 도메인 모델(`PaymentConfirmation`, `PaymentResult`)을 둔다.
-- [ ] `PaymentService`는 **Toss와 Toss DTO를 몰라야** 한다.
-- [ ] Toss DTO(요청/응답/에러) ↔ 도메인 모델 번역은 어댑터 `TossPaymentGateway`(부패 방지 계층, ACL)가 맡는다. PG사를 바꿔도 어댑터만 새로 만들면 되고 도메인은 그대로다.
+- [x] 도메인/애플리케이션 계층에 `PaymentGateway` **포트**와 도메인 모델(`PaymentConfirmation`)을 둔다.
+- [x] `orderService`는 **Toss와 Toss DTO를 몰라야** 한다.
+- [x] Toss DTO(요청/응답/에러) ↔ 도메인 모델 번역은 어댑터 `TossPaymentGateway`(부패 방지 계층, ACL)가 맡는다. PG사를 바꿔도 어댑터만 새로 만들면 되고 도메인은 그대로다.
 
 ### 6. 에러 응답을 도메인 예외로 매핑
 

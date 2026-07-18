@@ -10,4 +10,5 @@ spring:
     zone: Asia/Seoul
 
 toss:
+  base-url: https://api.tosspayments.com
   secret-key: test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R
