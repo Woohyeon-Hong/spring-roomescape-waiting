@@ -41,8 +41,8 @@ public class TossPaymentGateway implements PaymentGateway {
                 .body(confirmation)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    TossErrorResponse error = objectMapper.readValue(res.getBody(), TossErrorResponse.class);
-                    throw new PaymentApprovalException(error.message(), error.code());
+                    throw objectMapper.readValue(res.getBody(), TossErrorResponse.class)
+                            .toPaymentApprovalException();
                 }).toBodilessEntity();
     }
 }

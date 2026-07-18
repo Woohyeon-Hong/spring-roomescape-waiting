@@ -36,23 +36,23 @@
 
 ### 6. 에러 응답을 도메인 예외로 매핑
 
-- [ ] `onStatus(HttpStatusCode::isError, 핸들러)`로 4xx/5xx를 가로챈다.
-- [ ] 핸들러에서 본문을 `TossErrorResponse`(`{code, message}`)로 역직렬화한 뒤 도메인 예외로 변환한다.
-- [ ] **변환은 어댑터 안에서** 일어나고 Toss DTO는 밖으로 새지 않는다.
-- [ ] 변환한 예외는 사용자 응답으로도 의미 있게 이어진다(카드 거절은 안내, 키 오류는 알람 등).
-- [ ] `code`별 분기 방향을 자기 서비스에 맞게 설계한다:
+- [x] `onStatus(HttpStatusCode::isError, 핸들러)`로 4xx/5xx를 가로챈다.
+- [x] 핸들러에서 본문을 `TossErrorResponse`(`{code, message}`)로 역직렬화한 뒤 도메인 예외로 변환한다.
+- [x] **변환은 어댑터 안에서** 일어나고 Toss DTO는 밖으로 새지 않는다.
+- [x] 변환한 예외는 사용자 응답으로도 의미 있게 이어진다(카드* *거절은 안내, 키 오류는 알람 등).
+- [x] `code`별 분기 방향을 자기 서비스에 맞게 설계한다:
 
-| **HTTP** | **code** | **처리 방향** |
-| --- | --- | --- |
-| 400 | `ALREADY_PROCESSED_PAYMENT` | 이미 승인됨(재시도·새로고침) |
-| 400 | `DUPLICATED_ORDER_ID` / `NOT_FOUND_PAYMENT_SESSION` / `INVALID_REQUEST` | 중복·만료·잘못된 요청 |
-| 401 | `UNAUTHORIZED_KEY` / `INVALID_API_KEY` | 키 설정 오류 — **운영 알람** |
-| 403 | `REJECT_CARD_PAYMENT` | 카드 거절 — 사용자 안내 |
-| 404 | `NOT_FOUND_PAYMENT` | 결제 건 없음 |
-| 500 | `FAILED_PAYMENT_INTERNAL_SYSTEM_PROCESSING` | 토스 내부 오류 — **재시도 대상** |
-| 그 외 | 미정의 | 기본 예외 |
+| **HTTP** | **code**                                                                | **처리 방향**             |
+|----------|-------------------------------------------------------------------------|-----------------------|
+| 400      | `ALREADY_PROCESSED_PAYMENT`                                             | 이미 승인됨(재시도·새로고침)      |
+| 400      | `DUPLICATED_ORDER_ID` / `NOT_FOUND_PAYMENT_SESSION` / `INVALID_REQUEST` | 중복·만료·잘못된 요청          |
+| 401      | `UNAUTHORIZED_KEY` / `INVALID_API_KEY`                                  | 키 설정 오류 — **운영 알람**   |
+| 403      | `REJECT_CARD_PAYMENT`                                                   | 카드 거절 — 사용자 안내        |
+| 404      | `NOT_FOUND_PAYMENT`                                                     | 결제 건 없음               |
+| 500      | `FAILED_PAYMENT_INTERNAL_SYSTEM_PROCESSING`                             | 토스 내부 오류 — **재시도 대상** |
+| 그 외      | 미정의                                                                     | 기본 예외                 |
 
-- [ ] 정확한 목록은 Toss Payments 에러 코드의 "결제 승인" 섹션을 참고한다.
+- [x] 정확한 목록은 Toss Payments 에러 코드의 "결제 승인" 섹션을 참고한다.
 
 ### 7. failUrl(취소/실패) 처리
 

@@ -16,7 +16,13 @@ import roomescape.global.exception.DuplicateException;
 import roomescape.global.exception.InvalidRequestValueException;
 import roomescape.global.exception.NotFoundException;
 import roomescape.global.exception.response.ErrorResponse;
-import roomescape.payment.toss.PaymentApprovalException;
+import roomescape.payment.exception.PaymentAlreadyProcessedException;
+import roomescape.payment.exception.PaymentBadRequestException;
+import roomescape.payment.exception.PaymentNotFoundException;
+import roomescape.payment.exception.PaymentRejectedException;
+import roomescape.payment.exception.PaymentServerErrorException;
+import roomescape.payment.exception.PaymentUnauthorizedException;
+import roomescape.payment.exception.UnknownPaymentErrorException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -101,8 +107,38 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(message));
     }
 
-    @ExceptionHandler(PaymentApprovalException.class)
-    public ResponseEntity<ErrorResponse> handlePaymentApprovalException(PaymentApprovalException e) {
+    @ExceptionHandler(PaymentAlreadyProcessedException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentAlreadyProcessedException(PaymentAlreadyProcessedException e) {
         return makeResponse(e, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(PaymentBadRequestException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentBadRequestException(PaymentBadRequestException e) {
+        return makeResponse(e, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(PaymentUnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentUnauthorizedException(PaymentUnauthorizedException e) {
+        return makeResponse(e, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(PaymentRejectedException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentRejectedException(PaymentRejectedException e) {
+        return makeResponse(e, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(PaymentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentNotFoundException(PaymentNotFoundException e) {
+        return makeResponse(e, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(PaymentServerErrorException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentServerErrorException(PaymentServerErrorException e) {
+        return makeResponse(e, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(UnknownPaymentErrorException.class)
+    public ResponseEntity<ErrorResponse> handleUnknownPaymentErrorException(UnknownPaymentErrorException e) {
+        return makeResponse(e, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

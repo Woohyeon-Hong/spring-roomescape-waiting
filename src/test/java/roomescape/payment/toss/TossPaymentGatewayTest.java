@@ -20,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import roomescape.payment.PaymentConfirmation;
+import roomescape.payment.exception.PaymentAlreadyProcessedException;
 
 class TossPaymentGatewayTest {
 
@@ -96,7 +97,7 @@ class TossPaymentGatewayTest {
                 .setBody(body));
     }
 
-    @DisplayName("결제 승인이 실패하면 PaymentApprovalException이 발생한다.")
+    @DisplayName("이미 승인된 결제면 PaymentAlreadyProcessedException이 발생한다.")
     @Test
     void confirm_fail() {
         enqueue(400, """
@@ -105,10 +106,7 @@ class TossPaymentGatewayTest {
 
         assertThatThrownBy(() -> tossPaymentGateway.confirm(
                 new PaymentConfirmation("test_pk_1", "order-1", 10000L))
-        ).satisfies(e -> {
-            PaymentApprovalException ex = (PaymentApprovalException) e;
-            assertThat(ex.getMessage()).isEqualTo("이미 처리된 결제 입니다.");
-            assertThat(ex.getCode()).isEqualTo("ALREADY_PROCESSED_PAYMENT");
-        });
+        ).isInstanceOf(PaymentAlreadyProcessedException.class)
+                .hasMessage("이미 승인된 결제입니다.");
     }
 }
