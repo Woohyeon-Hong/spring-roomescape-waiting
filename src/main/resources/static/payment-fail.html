@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>결제 인증 실패 - Roomescape</title>
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="/styles.css" rel="stylesheet" />
+</head>
+<body>
+<main class="page">
+  <header class="hero">
+    <p class="eyebrow">ROOMESCAPE</p>
+    <h1>결제 인증 실패</h1>
+    <p>카드 인증이 완료되지 않았습니다. 다시 시도해 주세요.</p>
+    <p><a class="admin-link" href="/index.html">사용자 예약 페이지로 돌아가기</a></p>
+  </header>
+
+  <section class="panel">
+    <h2>실패 사유</h2>
+    <div class="reservation-row reservation-waiting" id="paymentFailResult" role="status"></div>
+  </section>
+
+  <p class="message" id="message"></p>
+</main>
+<script src="/payment-fail.js"></script>
+</body>
+</html>

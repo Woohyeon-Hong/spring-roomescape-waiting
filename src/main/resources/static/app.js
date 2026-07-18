@@ -6,6 +6,10 @@ const state = {
   availableTimes: []
 };
 
+// 토스페이먼츠 공식 문서용 테스트 클라이언트 키(비밀키 아님, 공개 사용 전제) — 실제 상점 키로 교체 필요
+const TOSS_CLIENT_KEY = "test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq";
+const tossPayments = TossPayments(TOSS_CLIENT_KEY);
+
 async function api(path, options = {}) {
   const { headers = {}, ...restOptions } = options;
   const mergedHeaders = {
@@ -170,12 +174,26 @@ async function loadPromotableWaitings() {
 }
 
 async function createOrder(amount) {
-  const order = await api("/orders", {
+  return api("/orders", {
     method: "POST",
     body: JSON.stringify({ amount: Number(amount) })
   });
-  await api(`/orders/${order.orderId}/confirm`, { method: "POST" });
-  return order.orderId;
+}
+
+// 카드 정보는 결제창(토스 도메인)에서 카드사가 직접 처리한다 — 이 서버/클라이언트는 카드번호를 절대 다루지 않는다.
+// 인증 성공 시 브라우저가 successUrl로 이동하므로, 이 함수 호출 이후 코드는 실행되지 않는다.
+async function requestTossPayment({ orderId, amount, orderName, customerName }) {
+  const payment = tossPayments.payment({ customerKey: "ANONYMOUS" });
+
+  await payment.requestPayment({
+    method: "CARD",
+    amount: { currency: "KRW", value: amount },
+    orderId,
+    orderName,
+    customerName,
+    successUrl: `${window.location.origin}/payment-success.html`,
+    failUrl: `${window.location.origin}/payment-fail.html`
+  });
 }
 
 async function loadPopularThemes() {
@@ -239,29 +257,45 @@ $("#availableTimes").addEventListener("click", async (event) => {
     return;
   }
 
+  const isWaiting = button.dataset.action === "wait";
+
+  if (isWaiting) {
+    try {
+      const created = await api("/reservation-waitings", {
+        method: "POST",
+        body: JSON.stringify({
+          name,
+          date,
+          timeId: Number(button.dataset.timeId),
+          themeId: Number(themeId)
+        })
+      });
+
+      await loadAvailableTimes();
+      await loadPopularThemes();
+      $("#lookupName").value = name;
+      await loadReservations();
+      $("#reservationSuccess").textContent =
+        `예약 대기 신청 성공: #${created.id} / [${created.theme?.name ?? "선택 테마"}] ${created.date} ${created.time.startAt} / ${created.name}`;
+      setMessage("예약 대기 신청이 완료되었습니다.");
+    } catch (error) {
+      setMessage(error.message);
+    }
+    return;
+  }
+
+  // 예약은 결제가 확정된 주문이 있어야 생성할 수 있어서, 결제창 인증을 먼저 거친다.
   try {
-    const isWaiting = button.dataset.action === "wait";
     const theme = state.themes.find((t) => t.id === Number(themeId));
-    const orderId = isWaiting ? undefined : await createOrder(theme?.amount);
+    const order = await createOrder(theme?.amount);
 
-    const created = await api(isWaiting ? "/reservation-waitings" : "/reservations", {
-      method: "POST",
-      body: JSON.stringify({
-        name,
-        date,
-        timeId: Number(button.dataset.timeId),
-        themeId: Number(themeId),
-        ...(isWaiting ? {} : { orderId })
-      })
+    setMessage("결제창으로 이동합니다...");
+    await requestTossPayment({
+      orderId: order.orderId,
+      amount: order.amount,
+      orderName: `${theme?.name ?? "테마"} 예약`,
+      customerName: name
     });
-
-    await loadAvailableTimes();
-    await loadPopularThemes();
-    $("#lookupName").value = name;
-    await loadReservations();
-    $("#reservationSuccess").textContent =
-      `${isWaiting ? "예약 대기 신청" : "예약"} 성공: #${created.id} / [${created.theme?.name ?? "선택 테마"}] ${created.date} ${created.time.startAt} / ${created.name}`;
-    setMessage(isWaiting ? "예약 대기 신청이 완료되었습니다." : "예약이 정상적으로 완료되었습니다.");
   } catch (error) {
     setMessage(error.message);
   }
@@ -289,11 +323,12 @@ $("#promotableWaitings").addEventListener("click", async (event) => {
 
   const name = $("#promotableLookupName").value.trim();
   try {
-    const orderId = await createOrder(button.dataset.amount);
+    // ponytail: 승격 API는 아직 주문 확정 여부를 검사하지 않아 결제창을 거치지 않는다 — 검사가 추가되면 requestTossPayment로 교체
+    const order = await createOrder(button.dataset.amount);
     await api(`/reservation-waitings/${button.dataset.id}/promote`, {
       method: "POST",
       headers: { Authorization: name },
-      body: JSON.stringify({ orderId })
+      body: JSON.stringify({ orderId: order.orderId })
     });
     setMessage("예약으로 승격되었습니다.");
     await loadPromotableWaitings();
