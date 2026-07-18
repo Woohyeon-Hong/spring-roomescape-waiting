@@ -21,6 +21,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import roomescape.order.domain.Order;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.service.ReservationService;
 import roomescape.reservation.service.dto.ReservationWithStatusResult;
@@ -46,7 +47,8 @@ class ReservationControllerTest {
                         "brown",
                         LocalDate.of(2026, 6, 1),
                         new ReservationTime(1L, LocalTime.of(10, 0)),
-                        new Theme(1L, "테마", "설명", "url", 1000L), null
+                        new Theme(1L, "테마", "설명", "url", 1000L),
+                        new Order(1L, "order-id", 1000L, false)
                 ));
 
         String body = """
@@ -54,7 +56,8 @@ class ReservationControllerTest {
                     "name": "brown",
                     "date": "2026-06-01",
                     "timeId": "1",
-                    "themeId": "1"
+                    "themeId": "1",
+                    "orderId": "order-id"
                 }
                 """;
 
@@ -73,7 +76,8 @@ class ReservationControllerTest {
                 {
                     "date": "2026-06-01",
                     "timeId": "1",
-                    "themeId": "1"
+                    "themeId": "1",
+                    "orderId": "order-id"
                 }
                 """;
 
@@ -81,7 +85,8 @@ class ReservationControllerTest {
                 {
                     "name": "brown",
                     "timeId": "1",
-                    "themeId": "1"
+                    "themeId": "1",
+                    "orderId": "order-id"
                 }
                 """;
 
@@ -89,7 +94,8 @@ class ReservationControllerTest {
                 {
                     "name": "brown",
                     "date": "2026-06-01",
-                    "themeId": "1"
+                    "themeId": "1",
+                    "orderId": "order-id"
                 }
                 """;
 
@@ -97,7 +103,17 @@ class ReservationControllerTest {
                 {
                     "name": "brown",
                     "date": "2026-06-01",
-                    "timeId": "1"
+                    "timeId": "1",
+                    "orderId": "order-id"
+                }
+                """;
+
+        String noOrderId = """
+                {
+                    "name": "brown",
+                    "date": "2026-06-01",
+                    "timeId": "1",
+                    "themeId": "1"
                 }
                 """;
 
@@ -125,6 +141,12 @@ class ReservationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(noThemeId)
         ).andExpect(status().isBadRequest());
+
+        mockMvc.perform(
+                post("/reservations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(noOrderId)
+        ).andExpect(status().isBadRequest());
     }
 
     @DisplayName("예약 생성 시에, 필드 형식이 유효하지 않으면 400을 반환한다.")
@@ -135,7 +157,8 @@ class ReservationControllerTest {
                     "name": "brown1",
                     "date": "2026-06-01",
                     "timeId": "1",
-                    "themeId": "1"
+                    "themeId": "1",
+                    "orderId": "order-id"
                 }
                 """;
 
@@ -144,7 +167,8 @@ class ReservationControllerTest {
                     "name": "brown",
                     "date": "invalid",
                     "timeId": "1",
-                    "themeId": "1"
+                    "themeId": "1",
+                    "orderId": "order-id"
                 }
                 """;
 
@@ -153,7 +177,8 @@ class ReservationControllerTest {
                     "name": "brown",
                     "date": "2026-06-01",
                     "timeId": "invalid",
-                    "themeId": "1"
+                    "themeId": "1",
+                    "orderId": "order-id"
                 }
                 """;
 
@@ -162,7 +187,18 @@ class ReservationControllerTest {
                     "name": "brown",
                     "date": "2026-06-01",
                     "timeId": "1",
-                    "themeId": "invalid"
+                    "themeId": "invalid",
+                    "orderId": "order-id"
+                }
+                """;
+
+        String invalidOrderId = """
+                {
+                    "name": "brown",
+                    "date": "2026-06-01",
+                    "timeId": "1",
+                    "themeId": "1",
+                    "orderId": ""
                 }
                 """;
 
@@ -189,6 +225,12 @@ class ReservationControllerTest {
                 post("/reservations")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidThemeId)
+        ).andExpect(status().isBadRequest());
+
+        mockMvc.perform(
+                post("/reservations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidOrderId)
         ).andExpect(status().isBadRequest());
     }
 

@@ -23,7 +23,8 @@ public class ReservationE2ETest extends E2ETest {
                 "name", "brown",
                 "date", "2026-05-05",
                 "timeId", 1,
-                "themeId", 1
+                "themeId", 1,
+                "orderId", createOrder(1000L)
         );
 
         //when & then
@@ -116,7 +117,8 @@ public class ReservationE2ETest extends E2ETest {
                 "name", "brown",
                 "date", "2026-05-05",
                 "timeId", 1,
-                "themeId", 1
+                "themeId", 1,
+                "orderId", createOrder(1000L)
         );
 
         RestAssured.given().log().all()
@@ -146,9 +148,9 @@ public class ReservationE2ETest extends E2ETest {
                 .body("size()", is(0));
     }
 
-    @DisplayName("예약 삭제 시 첫 번째 대기가 예약으로 승격되고 남은 대기의 순번이 재정렬된다.")
+    @DisplayName("예약 삭제 후에도 대기는 자동으로 승격되지 않고 순번을 유지한다.")
     @Test
-    void deleteMyReservationById_promotes_first_waiting() {
+    void deleteMyReservationById_does_not_auto_promote_waiting() {
         //given
         createReservationTime("10:00");
         createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/image.png", 1000L);
@@ -171,7 +173,10 @@ public class ReservationE2ETest extends E2ETest {
                 .queryParam("name", "pobi")
                 .when().get("/reservations")
                 .then().log().all()
-                .body("size()", is(1));
+                .statusCode(200)
+                .body("size()", is(1))
+                .body("[0].status", is("waiting"))
+                .body("[0].waitingOrder", is(1));
 
         RestAssured.given().log().all()
                 .queryParam("name", "gump")
@@ -180,6 +185,6 @@ public class ReservationE2ETest extends E2ETest {
                 .statusCode(200)
                 .body("size()", is(1))
                 .body("[0].status", is("waiting"))
-                .body("[0].waitingOrder", is(1));
+                .body("[0].waitingOrder", is(2));
     }
 }

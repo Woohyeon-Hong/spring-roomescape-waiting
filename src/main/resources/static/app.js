@@ -118,7 +118,7 @@ function renderPromotableWaitings(waitings) {
         ${waiting.id}. [${waiting.theme?.name ?? "테마 없음"}] ${waiting.date} ${waiting.time.startAt} - ${waiting.name}
       </span>
       <div class="reservation-actions">
-        <button class="ghost reservation-promote" data-id="${waiting.id}" type="button">승격 요청</button>
+        <button class="ghost reservation-promote" data-id="${waiting.id}" data-amount="${waiting.theme?.amount ?? ""}" type="button">승격 요청</button>
       </div>
     `;
     root.appendChild(row);
@@ -167,6 +167,15 @@ async function loadPromotableWaitings() {
     headers: { Authorization: name }
   });
   renderPromotableWaitings(waitings);
+}
+
+async function createOrder(amount) {
+  const order = await api("/orders", {
+    method: "POST",
+    body: JSON.stringify({ amount: Number(amount) })
+  });
+  await api(`/orders/${order.orderId}/confirm`, { method: "POST" });
+  return order.orderId;
 }
 
 async function loadPopularThemes() {
@@ -232,13 +241,17 @@ $("#availableTimes").addEventListener("click", async (event) => {
 
   try {
     const isWaiting = button.dataset.action === "wait";
+    const theme = state.themes.find((t) => t.id === Number(themeId));
+    const orderId = isWaiting ? undefined : await createOrder(theme?.amount);
+
     const created = await api(isWaiting ? "/reservation-waitings" : "/reservations", {
       method: "POST",
       body: JSON.stringify({
         name,
         date,
         timeId: Number(button.dataset.timeId),
-        themeId: Number(themeId)
+        themeId: Number(themeId),
+        ...(isWaiting ? {} : { orderId })
       })
     });
 
@@ -276,9 +289,11 @@ $("#promotableWaitings").addEventListener("click", async (event) => {
 
   const name = $("#promotableLookupName").value.trim();
   try {
+    const orderId = await createOrder(button.dataset.amount);
     await api(`/reservation-waitings/${button.dataset.id}/promote`, {
       method: "POST",
-      headers: { Authorization: name }
+      headers: { Authorization: name },
+      body: JSON.stringify({ orderId })
     });
     setMessage("예약으로 승격되었습니다.");
     await loadPromotableWaitings();

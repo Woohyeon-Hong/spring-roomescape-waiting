@@ -28,7 +28,7 @@ class OrderControllerTest {
     void createOrder_success() throws Exception {
         //given
         when(orderService.makeOrder(1000L))
-                .thenReturn(new Order(1L, "order-id", 1000L));
+                .thenReturn(new Order(1L, "order-id", 1000L, false));
 
         String body = """
                 {

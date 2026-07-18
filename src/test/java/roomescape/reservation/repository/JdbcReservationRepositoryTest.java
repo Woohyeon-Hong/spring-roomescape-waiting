@@ -116,7 +116,7 @@ class JdbcReservationRepositoryTest {
                 orderId
         );
 
-        return new Order(id, orderId, amount);
+        return new Order(id, orderId, amount, false);
     }
 
     @Test
@@ -390,6 +390,36 @@ class JdbcReservationRepositoryTest {
         );
     }
 
+
+    @Test
+    @DisplayName("같은 슬롯에 대기가 여러 명이면, 본인 이름으로 조회해도 실제 대기열 순번이 반환된다.")
+    void findAllByName_waitingOrder_reflects_actual_queue_position() {
+        // given
+        ReservationTime time = createTime(LocalTime.of(10, 0));
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        LocalDate date = LocalDate.of(2024, 5, 1);
+
+        ReservationWaiting first = reservationWaitingRepository.save(ReservationWaiting.of(
+                "brown", date, time, theme
+        ));
+        ReservationWaiting second = reservationWaitingRepository.save(ReservationWaiting.of(
+                "pobi", date, time, theme
+        ));
+
+        // when
+        List<ReservationWithStatusResult> brownResults = reservationRepository.findAllByName("brown");
+        List<ReservationWithStatusResult> pobiResults = reservationRepository.findAllByName("pobi");
+
+        // then
+        assertAll(
+                () -> assertThat(brownResults)
+                        .extracting(ReservationWithStatusResult::waitingOrder)
+                        .containsExactly(1L),
+                () -> assertThat(pobiResults)
+                        .extracting(ReservationWithStatusResult::waitingOrder)
+                        .containsExactly(2L)
+        );
+    }
 
     @Test
     @DisplayName("from과 to 사이 일정의 예약들에 대해, 상위 limit 개의 테마들을 조회한다.")

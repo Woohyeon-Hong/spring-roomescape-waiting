@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -19,6 +20,7 @@ import roomescape.theme.domain.Theme;
 import roomescape.time.domain.ReservationTime;
 
 @Repository
+@RequiredArgsConstructor
 public class JdbcReservationRepository implements ReservationRepository {
 
     private static final RowMapper<Reservation> RESERVATION_ROW_MAPPER = (resultSet, rowNum) -> {
@@ -41,7 +43,8 @@ public class JdbcReservationRepository implements ReservationRepository {
             order = new Order(
                     orderId,
                     resultSet.getString("orders_order_id"),
-                    resultSet.getLong("orders_amount")
+                    resultSet.getLong("orders_amount"),
+                    resultSet.getBoolean("orders_is_confirmed")
             );
         }
 
@@ -56,10 +59,6 @@ public class JdbcReservationRepository implements ReservationRepository {
     };
 
     private final JdbcTemplate jdbcTemplate;
-
-    public JdbcReservationRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     public Reservation save(Reservation reservation) {
@@ -110,9 +109,9 @@ public class JdbcReservationRepository implements ReservationRepository {
 
         UNION ALL
 
-        SELECT rw.id AS id,
-               rw.name AS name,
-               rw.reservation_date AS reservation_date,
+        SELECT ranked.id AS id,
+               ranked.name AS name,
+               ranked.reservation_date AS reservation_date,
                t.id AS time_id,
                t.start_at AS time_start_at,
                h.id AS theme_id,
@@ -121,14 +120,22 @@ public class JdbcReservationRepository implements ReservationRepository {
                h.thumbnail_url AS theme_url,
                h.amount AS theme_amount,
                'waiting' AS status,
-               ROW_NUMBER() OVER (
-                    PARTITION BY rw.reservation_date, rw.time_id, rw.theme_id
-                    ORDER BY rw.id
-               ) AS waiting_order
-        FROM reservation_waiting rw
-        INNER JOIN reservation_time t ON rw.time_id = t.id
-        INNER JOIN theme h ON rw.theme_id = h.id
-        WHERE rw.name = ?
+               ranked.waiting_order AS waiting_order
+        FROM (
+            SELECT rw.id,
+                   rw.name,
+                   rw.reservation_date,
+                   rw.time_id,
+                   rw.theme_id,
+                   ROW_NUMBER() OVER (
+                        PARTITION BY rw.reservation_date, rw.time_id, rw.theme_id
+                        ORDER BY rw.id
+                   ) AS waiting_order
+            FROM reservation_waiting rw
+        ) ranked
+        INNER JOIN reservation_time t ON ranked.time_id = t.id
+        INNER JOIN theme h ON ranked.theme_id = h.id
+        WHERE ranked.name = ?
 
         ORDER BY reservation_date ASC, time_start_at ASC, waiting_order ASC
         """;
@@ -176,7 +183,8 @@ public class JdbcReservationRepository implements ReservationRepository {
                h.amount AS theme_amount,
                o.id AS orders_id,
                o.order_id AS orders_order_id,
-               o.amount AS orders_amount
+               o.amount AS orders_amount,
+               o.is_confirmed AS orders_is_confirmed
         FROM reservation r
         INNER JOIN reservation_time t
           ON r.time_id = t.id
@@ -207,7 +215,8 @@ public class JdbcReservationRepository implements ReservationRepository {
                h.amount AS theme_amount,
                o.id AS orders_id,
                o.order_id AS orders_order_id,
-               o.amount AS orders_amount
+               o.amount AS orders_amount,
+               o.is_confirmed AS orders_is_confirmed
         FROM reservation r
         INNER JOIN reservation_time t
           ON r.time_id = t.id
@@ -252,7 +261,8 @@ public class JdbcReservationRepository implements ReservationRepository {
                h.amount AS theme_amount,
                o.id AS orders_id,
                o.order_id AS orders_order_id,
-               o.amount AS orders_amount
+               o.amount AS orders_amount,
+               o.is_confirmed AS orders_is_confirmed
         FROM reservation r
         INNER JOIN reservation_time t
           ON r.time_id = t.id

@@ -42,7 +42,6 @@ public class ReservationController {
                 .body(response);
     }
 
-
     @GetMapping
     public ResponseEntity<List<ReservationWithStatusResponse>> getAllReservationsByName(@RequestParam("name") String name) {
         if (name == null || name.isBlank()) {

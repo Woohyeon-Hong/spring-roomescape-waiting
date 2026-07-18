@@ -8,6 +8,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import roomescape.order.domain.Order;
+import roomescape.order.exception.OrderNotFoundException;
 
 @Repository
 public class JdbdcOrderRepository implements OrderRepository{
@@ -16,7 +17,8 @@ public class JdbdcOrderRepository implements OrderRepository{
             new Order(
                     resultSet.getLong("id"),
                     resultSet.getString("order_id"),
-                    resultSet.getLong("amount")
+                    resultSet.getLong("amount"),
+                    resultSet.getBoolean("is_confirmed")
             );
 
     private final JdbcTemplate jdbcTemplate;
@@ -28,8 +30,8 @@ public class JdbdcOrderRepository implements OrderRepository{
     @Override
     public Order save(Order order) {
         String sql = """
-               INSERT INTO orders (order_id, amount)
-               VALUES (?, ?)
+               INSERT INTO orders (order_id, amount, is_confirmed)
+               VALUES (?, ?, ?)
                """;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -38,6 +40,7 @@ public class JdbdcOrderRepository implements OrderRepository{
             PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
             ps.setString(1, order.getOrderId());
             ps.setLong(2, order.getAmount());
+            ps.setBoolean(3, order.isConfirmed());
             return ps;
         }, keyHolder);
 
@@ -67,5 +70,20 @@ public class JdbdcOrderRepository implements OrderRepository{
 
         return jdbcTemplate.query(sql, ORDER_ROW_MAPPER, orderId)
                 .stream().findFirst();
+    }
+
+    @Override
+    public void confirmByOrderId(String orderId) {
+        String sql = """
+               UPDATE orders
+               SET is_confirmed = true
+               WHERE order_id = ?
+               """;
+
+        int affectedRow = jdbcTemplate.update(sql, orderId);
+
+        if (affectedRow == 0) {
+            throw new OrderNotFoundException();
+        }
     }
 }

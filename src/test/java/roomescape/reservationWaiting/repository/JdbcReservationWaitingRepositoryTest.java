@@ -289,7 +289,7 @@ class JdbcReservationWaitingRepositoryTest {
                 Long.class
         );
 
-        return new Order(orderId, order.getOrderId(), order.getAmount());
+        return new Order(orderId, order.getOrderId(), order.getAmount(), false);
     }
 
     private void saveReservation(String name, LocalDate date, ReservationTime time, Theme theme, Order order) {

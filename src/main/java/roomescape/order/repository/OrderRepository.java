@@ -10,4 +10,6 @@ public interface OrderRepository {
     Optional<Order> findById(Long id);
 
     Optional<Order> findByOrderId(String orderId);
+
+    void confirmByOrderId(String orderId);
 }

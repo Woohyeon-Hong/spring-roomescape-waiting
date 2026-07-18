@@ -22,6 +22,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import roomescape.auth.exception.AuthorizationException;
 import roomescape.order.domain.Order;
+import roomescape.order.exception.OrderAmountMismatchException;
+import roomescape.order.exception.OrderNotFoundException;
 import roomescape.order.repository.OrderRepository;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.exception.InvalidReservationDateValueException;
@@ -294,17 +296,17 @@ class ReservationWaitingServiceTest {
         when(reservationWaitingRepository.deleteById(1L))
                 .thenReturn(1);
 
-        Order order = new Order(1L, "order-id", 1000L);
-        when(orderRepository.save(argThat(o -> o.getAmount().equals(1000L))))
-                .thenReturn(order);
+        Order order = new Order(1L, "order-id", 1000L, false);
+        when(orderRepository.findByOrderId("order-id"))
+                .thenReturn(Optional.of(order));
 
         //when
-        reservationWaitingService.promoteWaiting(1L, "pobi");
+        reservationWaitingService.promoteWaiting(1L, "pobi", "order-id");
 
         //then
         assertAll(
                 () -> verify(reservationWaitingRepository).deleteById(1L),
-                () -> verify(orderRepository).save(argThat(o -> o.getAmount().equals(1000L))),
+                () -> verify(orderRepository).findByOrderId("order-id"),
                 () -> verify(reservationRepository).save(argThat(reservation ->
                         reservation.getName().equals("pobi")
                                 && reservation.getDate().equals(date)
@@ -323,7 +325,7 @@ class ReservationWaitingServiceTest {
                 .thenReturn(Optional.empty());
 
         //when & then
-        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(1L, "pobi"))
+        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(1L, "pobi", "order-id"))
                 .isInstanceOf(ReservationWaitingNotFoundException.class);
     }
 
@@ -339,7 +341,7 @@ class ReservationWaitingServiceTest {
                 .thenReturn(Optional.of(new ReservationWaiting(1L, "pobi", date, time, theme)));
 
         //when & then
-        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(1L, "other"))
+        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(1L, "other", "order-id"))
                 .isInstanceOf(AuthorizationException.class);
     }
 
@@ -360,7 +362,53 @@ class ReservationWaitingServiceTest {
                 .thenReturn(Optional.of(first));
 
         //when & then
-        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(2L, "pobi"))
+        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(2L, "pobi", "order-id"))
                 .isInstanceOf(ReservationWaitingNotPromotableException.class);
+    }
+
+    @DisplayName("승격 요청 시, 주문이 없으면 예외가 발생한다.")
+    @Test
+    void promoteWaitingTest_no_order() {
+        //given
+        ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
+        LocalDate date = LocalDate.of(2026, 5, 15);
+        ReservationWaiting waiting = new ReservationWaiting(1L, "pobi", date, time, theme);
+
+        when(reservationWaitingRepository.findById(1L))
+                .thenReturn(Optional.of(waiting));
+
+        when(reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(date, 1L, 1L))
+                .thenReturn(Optional.of(waiting));
+
+        when(orderRepository.findByOrderId("order-id"))
+                .thenReturn(Optional.empty());
+
+        //when & then
+        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(1L, "pobi", "order-id"))
+                .isInstanceOf(OrderNotFoundException.class);
+    }
+
+    @DisplayName("승격 요청 시, 주문 금액이 테마 금액과 다르면 예외가 발생한다.")
+    @Test
+    void promoteWaitingTest_order_amount_mismatch() {
+        //given
+        ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
+        LocalDate date = LocalDate.of(2026, 5, 15);
+        ReservationWaiting waiting = new ReservationWaiting(1L, "pobi", date, time, theme);
+
+        when(reservationWaitingRepository.findById(1L))
+                .thenReturn(Optional.of(waiting));
+
+        when(reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(date, 1L, 1L))
+                .thenReturn(Optional.of(waiting));
+
+        when(orderRepository.findByOrderId("order-id"))
+                .thenReturn(Optional.of(Order.of(500L)));
+
+        //when & then
+        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(1L, "pobi", "order-id"))
+                .isInstanceOf(OrderAmountMismatchException.class);
     }
 }

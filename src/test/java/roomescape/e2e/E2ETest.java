@@ -66,12 +66,32 @@ public abstract class E2ETest {
                 .then().statusCode(201);
     }
 
+    protected String createOrder(Long amount) {
+        Map<String, Object> requestBody = Map.of("amount", amount);
+
+        String orderId = RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .when().post("/orders")
+                .then().statusCode(201)
+                .extract().path("orderId");
+
+        RestAssured.given()
+                .when().post("/orders/{orderId}/confirm", orderId)
+                .then().statusCode(204);
+
+        return orderId;
+    }
+
     protected void createReservation(String name, LocalDate date, Long timeId, Long themeId) {
+        String orderId = createOrder(1000L);
+
         Map<String, Object> reservation = Map.of(
                 "name", name,
                 "date", date.toString(),
                 "timeId", timeId,
-                "themeId", themeId
+                "themeId", themeId,
+                "orderId", orderId
         );
 
         RestAssured.given()

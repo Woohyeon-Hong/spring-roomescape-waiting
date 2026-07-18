@@ -14,4 +14,8 @@ public class OrderService {
     public Order makeOrder(Long amount) {
         return orderRepository.save(Order.of(amount));
     }
+
+    public void confirm(String orderId) {
+        orderRepository.confirmByOrderId(orderId);
+    }
 }

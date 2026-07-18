@@ -23,7 +23,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import roomescape.order.domain.Order;
+import roomescape.order.exception.OrderAmountMismatchException;
+import roomescape.order.exception.OrderNotFoundException;
 import roomescape.order.repository.OrderRepository;
+import roomescape.order.service.OrderService;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.exception.DuplicateReservationException;
 import roomescape.reservation.repository.ReservationRepository;
@@ -60,6 +63,9 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
     @Autowired
     ReservationService reservationService;
 
+    @Autowired
+    OrderService orderService;
+
     @MockitoSpyBean
     ReservationWaitingRepository reservationWaitingRepository;
 
@@ -81,10 +87,12 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                         "테마", "설명", "url", 1000L
                 )
         );
+        Order order = orderService.makeOrder(1000L);
+        orderService.confirm(order.getOrderId());
 
         reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L, order.getOrderId()
                 )
         );
 
@@ -129,10 +137,12 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                         "테마", "설명", "url", 1000L
                 )
         );
+        Order order = orderService.makeOrder(1000L);
+        orderService.confirm(order.getOrderId());
 
         reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L, order.getOrderId()
                 )
         );
 
@@ -199,10 +209,12 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                         "테마", "설명", "url", 1000L
                 )
         );
+        Order order = orderService.makeOrder(1000L);
+        orderService.confirm(order.getOrderId());
 
         reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L, order.getOrderId()
                 )
         );
 
@@ -262,10 +274,12 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                         "테마", "설명", "url", 1000L
                 )
         );
+        Order order = orderService.makeOrder(1000L);
+        orderService.confirm(order.getOrderId());
 
         reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L, order.getOrderId()
                 )
         );
         reservationWaitingService.makeReservationWaiting(
@@ -308,10 +322,12 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                         "테마", "설명", "url", 1000L
                 )
         );
+        Order reservationOrder = orderService.makeOrder(1000L);
+        orderService.confirm(reservationOrder.getOrderId());
 
         reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L, reservationOrder.getOrderId()
                 )
         );
         reservationWaitingService.makeReservationWaiting(new ReservationWaitingCommand(
@@ -322,21 +338,23 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
         ));
         reservationService.deleteReservationById(RESERVATION_ID);
 
+        Order promotionOrder = orderService.makeOrder(1000L);
+        orderService.confirm(promotionOrder.getOrderId());
+
         doThrow(new DuplicateKeyException("duplicate"))
                 .when(reservationRepository)
                 .save(any(Reservation.class));
 
         //when & then
-        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(WAITING_ID, "pobi"))
+        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(WAITING_ID, "pobi", promotionOrder.getOrderId()))
                 .isInstanceOf(DuplicateReservationException.class);
 
         assertWaitingExists(WAITING_ID);
     }
 
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    @DisplayName("예약 대기 승격 시 주문 저장이 실패하면 대기 삭제가 롤백된다.")
+    @DisplayName("승격 요청 시 주문을 찾을 수 없으면 대기가 삭제되지 않는다.")
     @Test
-    void promoteWaitingTest_rolls_back_when_order_save_fails() {
+    void promoteWaitingTest_does_not_delete_waiting_when_order_not_found() {
         //given
         reservationTimeService.registerReservationTime(
                 new ReservationTimeCommand(LocalTime.of(10, 0))
@@ -346,10 +364,12 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                         "테마", "설명", "url", 1000L
                 )
         );
+        Order order = orderService.makeOrder(1000L);
+        orderService.confirm(order.getOrderId());
 
         reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L, order.getOrderId()
                 )
         );
         reservationWaitingService.makeReservationWaiting(new ReservationWaitingCommand(
@@ -360,13 +380,46 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
         ));
         reservationService.deleteReservationById(RESERVATION_ID);
 
-        doThrow(new DuplicateKeyException("duplicate"))
-                .when(orderRepository)
-                .save(any(Order.class));
+        //when & then
+        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(WAITING_ID, "pobi", "no-such-order"))
+                .isInstanceOf(OrderNotFoundException.class);
+
+        assertWaitingExists(WAITING_ID);
+    }
+
+    @DisplayName("승격 요청 시 주문 금액이 테마 금액과 다르면 대기가 삭제되지 않는다.")
+    @Test
+    void promoteWaitingTest_does_not_delete_waiting_when_order_amount_mismatch() {
+        //given
+        reservationTimeService.registerReservationTime(
+                new ReservationTimeCommand(LocalTime.of(10, 0))
+        );
+        themeService.registerTheme(
+                new ThemeCommand(
+                        "테마", "설명", "url", 1000L
+                )
+        );
+        Order order = orderService.makeOrder(1000L);
+        orderService.confirm(order.getOrderId());
+
+        reservationService.makeReservation(
+                new ReservationCommand(
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L, order.getOrderId()
+                )
+        );
+        reservationWaitingService.makeReservationWaiting(new ReservationWaitingCommand(
+                "pobi",
+                LocalDate.of(2026, 5, 5),
+                1L,
+                1L
+        ));
+        reservationService.deleteReservationById(RESERVATION_ID);
+
+        Order mismatchedOrder = orderService.makeOrder(500L);
 
         //when & then
-        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(WAITING_ID, "pobi"))
-                .isInstanceOf(DuplicateKeyException.class);
+        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(WAITING_ID, "pobi", mismatchedOrder.getOrderId()))
+                .isInstanceOf(OrderAmountMismatchException.class);
 
         assertWaitingExists(WAITING_ID);
     }
@@ -383,10 +436,12 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                         "테마", "설명", "url", 1000L
                 )
         );
+        Order order = orderService.makeOrder(1000L);
+        orderService.confirm(order.getOrderId());
 
         reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L, order.getOrderId()
                 )
         );
         reservationWaitingService.makeReservationWaiting(new ReservationWaitingCommand(
@@ -397,10 +452,13 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
         ));
         reservationService.deleteReservationById(RESERVATION_ID);
 
+        Order promotionOrder = orderService.makeOrder(1000L);
+        orderService.confirm(promotionOrder.getOrderId());
+
         //when
         List<ConcurrentResult> results = ConcurrentExecutor.executeConcurrently(10, () -> {
             try {
-                reservationWaitingService.promoteWaiting(WAITING_ID, "pobi");
+                reservationWaitingService.promoteWaiting(WAITING_ID, "pobi", promotionOrder.getOrderId());
 
                 return ConcurrentResult.withSuccess();
             } catch (Throwable e) {
@@ -430,10 +488,12 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                         "테마", "설명", "url", 1000L
                 )
         );
+        Order order = orderService.makeOrder(1000L);
+        orderService.confirm(order.getOrderId());
 
         reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L, order.getOrderId()
                 )
         );
         reservationWaitingService.makeReservationWaiting(new ReservationWaitingCommand(

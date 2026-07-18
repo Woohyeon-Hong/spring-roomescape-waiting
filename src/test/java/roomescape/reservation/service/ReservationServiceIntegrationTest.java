@@ -1,9 +1,6 @@
 package roomescape.reservation.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -11,12 +8,8 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import roomescape.order.domain.Order;
-import roomescape.order.repository.OrderRepository;
+import roomescape.order.service.OrderService;
 import roomescape.reservation.exception.DuplicateReservationException;
 import roomescape.reservation.exception.ReservationNotFoundException;
 import roomescape.reservation.service.dto.ReservationCommand;
@@ -42,8 +35,8 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
     @Autowired
     ThemeService themeService;
 
-    @MockitoSpyBean
-    OrderRepository orderRepository;
+    @Autowired
+    OrderService orderService;
 
     @DisplayName("동일한 예약 요청이 동시에 들어오면 하나만 성공하고 나머지는 중복 예외가 발생한다")
     @Test
@@ -57,6 +50,8 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
                         "테마", "설명", "url", 1000L
                 )
         );
+        Order order = orderService.makeOrder(1000L);
+        orderService.confirm(order.getOrderId());
 
         //when
         List<ConcurrentResult> results = ConcurrentExecutor.executeConcurrently(100, () -> {
@@ -65,7 +60,8 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
                         "brown",
                         LocalDate.of(2026, 5, 5),
                         1L,
-                        1L
+                        1L,
+                        order.getOrderId()
                 ));
 
                 return ConcurrentResult.withSuccess();
@@ -82,32 +78,6 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
                 .filteredOn(result -> !result.success())
                 .extracting(ConcurrentResult::exception)
                 .allMatch(DuplicateReservationException.class::isInstance);
-    }
-
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    @DisplayName("예약 생성 중 주문 저장이 실패하면 예약도 저장되지 않는다.")
-    @Test
-    void makeReservationTest_rolls_back_when_order_save_fails() {
-        //given
-        reservationTimeService.registerReservationTime(
-                new ReservationTimeCommand(LocalTime.of(10, 0))
-        );
-        themeService.registerTheme(
-                new ThemeCommand(
-                        "테마", "설명", "url", 1000L
-                )
-        );
-
-        doThrow(new DuplicateKeyException("duplicate"))
-                .when(orderRepository)
-                .save(any(Order.class));
-
-        //when & then
-        assertThatThrownBy(() -> reservationService.makeReservation(new ReservationCommand(
-                "brown", LocalDate.of(2026, 5, 5), 1L, 1L
-        ))).isInstanceOf(DuplicateKeyException.class);
-
-        assertThat(reservationService.findReservations()).isEmpty();
     }
 
     @DisplayName("서로 다른 본인 예약을 같은 슬롯으로 동시에 수정하면 하나만 성공하고 하나는 중복 예외가 발생한다")
@@ -128,14 +98,19 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
                         "테마", "설명", "url", 1000L
                 )
         );
+        Order order1 = orderService.makeOrder(1000L);
+        orderService.confirm(order1.getOrderId());
+        Order order2 = orderService.makeOrder(1000L);
+        orderService.confirm(order2.getOrderId());
+
         reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L, order1.getOrderId()
                 )
         );
         reservationService.makeReservation(
                 new ReservationCommand(
-                        "pobi", LocalDate.of(2026, 5, 5), 2L, 1L
+                        "pobi", LocalDate.of(2026, 5, 5), 2L, 1L, order2.getOrderId()
                 )
         );
 
@@ -180,10 +155,12 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
                         "테마", "설명", "url", 1000L
                 )
         );
+        Order order = orderService.makeOrder(1000L);
+        orderService.confirm(order.getOrderId());
 
         reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L, order.getOrderId()
                 )
         );
 
@@ -220,10 +197,12 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
                         "테마", "설명", "url", 1000L
                 )
         );
+        Order order = orderService.makeOrder(1000L);
+        orderService.confirm(order.getOrderId());
 
         reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L, order.getOrderId()
                 )
         );
 
