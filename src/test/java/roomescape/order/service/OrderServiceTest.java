@@ -13,11 +13,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import roomescape.order.client.TossPaymentClient;
 import roomescape.order.domain.Order;
 import roomescape.order.exception.OrderNotFoundException;
 import roomescape.order.exception.PaymentAmountMismatchException;
 import roomescape.order.repository.OrderRepository;
+import roomescape.payment.PaymentConfirmation;
+import roomescape.payment.toss.TossPaymentGateway;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
@@ -26,7 +27,7 @@ class OrderServiceTest {
     OrderRepository orderRepository;
 
     @Mock
-    TossPaymentClient tossPaymentClient;
+    TossPaymentGateway tossPaymentGateway;
 
     @InjectMocks
     OrderService orderService;
@@ -53,7 +54,7 @@ class OrderServiceTest {
         assertThatThrownBy(() -> orderService.confirm("order-id", "payment-key", 500L))
                 .isInstanceOf(PaymentAmountMismatchException.class);
 
-        verify(tossPaymentClient, never()).confirm(any(), any(), any());
+        verify(tossPaymentGateway, never()).confirm(any());
     }
 
     @DisplayName("금액이 일치하면 토스 승인 API를 호출하고, 성공하면 결제 키를 저장하며 주문을 확정한다.")
@@ -67,7 +68,7 @@ class OrderServiceTest {
         orderService.confirm("order-id", "payment-key", 1000L);
 
         //then
-        verify(tossPaymentClient).confirm("payment-key", "order-id", 1000L);
+        verify(tossPaymentGateway).confirm(new PaymentConfirmation("payment-key", "order-id", 1000L));
         verify(orderRepository).confirmByOrderId("order-id", "payment-key");
     }
 }

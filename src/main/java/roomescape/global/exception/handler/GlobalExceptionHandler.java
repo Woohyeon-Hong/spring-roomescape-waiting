@@ -16,6 +16,7 @@ import roomescape.global.exception.DuplicateException;
 import roomescape.global.exception.InvalidRequestValueException;
 import roomescape.global.exception.NotFoundException;
 import roomescape.global.exception.response.ErrorResponse;
+import roomescape.payment.toss.PaymentApprovalException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -58,18 +59,6 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("요청 파라미터 형식이 유효하지 않습니다."));
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        String message = e.getBindingResult().getFieldErrors().stream()
-                .findFirst()
-                .map(FieldError::getDefaultMessage)
-                .orElse("요청 값이 유효하지 않습니다.");
-
-        return ResponseEntity
-                .badRequest()
-                .body(new ErrorResponse(message));
-    }
-
     @ExceptionHandler(DuplicateException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateException(DuplicateException e) {
         return makeResponse(e, HttpStatus.CONFLICT);
@@ -98,5 +87,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthorizationException.class)
     public ResponseEntity<ErrorResponse> handleAuthorizationException(AuthorizationException e) {
         return makeResponse(e, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        String message = e.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(FieldError::getDefaultMessage)
+                .orElse("요청 값이 유효하지 않습니다.");
+
+        return ResponseEntity
+                .badRequest()
+                .body(new ErrorResponse(message));
+    }
+
+    @ExceptionHandler(PaymentApprovalException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentApprovalException(PaymentApprovalException e) {
+        return makeResponse(e, HttpStatus.BAD_REQUEST);
     }
 }

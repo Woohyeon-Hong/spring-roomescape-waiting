@@ -23,10 +23,10 @@
 
 ### 4. 결제 승인 API 호출 (`RestClient`)
 
-- [ ] `POST https://api.tosspayments.com/v1/payments/confirm`를 `RestClient`로 호출한다.
-- [ ] 바디 3필드: `paymentKey`, `orderId`, `amount` (Content-Type `application/json`).
-- [ ] 인증은 **Basic**: `base64(시크릿키 + ":")`를 `Authorization: Basic ...`로 보낸다(콜론 뒤 비밀번호는 비우고, 인코딩 시 UTF-8 명시).
-- [ ] **시크릿 키(**`test_sk_`**)는 노출/하드코딩 금지** — `application.yaml` 등으로 외부화한다. 시크릿 키는 서버 승인 전용이다(클라이언트 키와 역할이 다름).
+- [x] `POST https://api.tosspayments.com/v1/payments/confirm`를 `RestClient`로 호출한다.
+- [x] 바디 3필드: `paymentKey`, `orderId`, `amount` (Content-Type `application/json`).
+- [x] 인증은 **Basic**: `base64(시크릿키 + ":")`를 `Authorization: Basic ...`로 보낸다(콜론 뒤 비밀번호는 비우고, 인코딩 시 UTF-8 명시).
+- [x] **시크릿 키(**`test_sk_`**)는 노출/하드코딩 금지** — `application.yaml` 등으로 외부화한다. 시크릿 키는 서버 승인 전용이다(클라이언트 키와 역할이 다름).
 
 ### 5. 관심사 분리 — 포트 & 어댑터
 
