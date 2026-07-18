@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import roomescape.reservation.exception.InvalidReservationDateValueException;
 import roomescape.theme.repository.ThemeRepository;
 import roomescape.time.domain.ReservationTime;
 import roomescape.time.exception.DuplicateTimeException;
@@ -42,11 +45,32 @@ class ReservationTimeServiceTest {
         //given
         when(reservationTimeRepository.existByStartAt(LocalTime.of(10, 0)))
                 .thenReturn(true);
-
         //when & then
         assertThatThrownBy(() -> reservationTimeService.registerReservationTime(
                 new ReservationTimeCommand(LocalTime.of(10, 0))
         )).isInstanceOf(DuplicateTimeException.class);
+    }
+
+    @DisplayName("주어진 날짜가 오늘이거나 이전이면 예외가 발생한다.")
+    @Test
+    void findAvailableReservationTimes_invalid_date() {
+        //given
+        when(clock.instant()).thenReturn(
+                LocalDate.of(2026, 5, 8)
+                        .atStartOfDay(ZoneId.systemDefault())
+                        .toInstant()
+        );
+        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+
+        LocalDate today = LocalDate.of(2026, 5, 8);
+        LocalDate previous = LocalDate.of(2026, 5, 7);
+
+        //when & then
+        assertThatThrownBy(() -> reservationTimeService.findAvailableReservationTimes(1L, today))
+                .isInstanceOf(InvalidReservationDateValueException.class);
+
+        assertThatThrownBy(() -> reservationTimeService.findAvailableReservationTimes(1L, previous))
+                .isInstanceOf(InvalidReservationDateValueException.class);
     }
 
     @DisplayName("id에 해당하는 테마가 없으면 예외가 발생한다.")

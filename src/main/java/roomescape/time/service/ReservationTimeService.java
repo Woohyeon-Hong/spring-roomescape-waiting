@@ -49,7 +49,7 @@ public class ReservationTimeService {
     }
 
     public AvailableTimesResult findAvailableReservationTimes(Long themeId, LocalDate date) {
-        if (LocalDate.now(clock).isAfter(date)) {
+        if (!date.isAfter(LocalDate.now(clock))) {
             throw new InvalidReservationDateValueException();
         }
 
