@@ -59,3 +59,24 @@
 - [x] `failUrl`로 `code`, `message`, `orderId`가 넘어온다.
 - [x] 실패 사유를 사용자에게 보여주고 결제 대기 상태의 주문을 정리한다. (order-first 구조상 이 시점엔 예약이 아직 생성되지 않으므로 정리 대상은 주문뿐이다.)
 - [x] 사용자가 취소(`PAY_PROCESS_CANCELED`)하면 `orderId`가 없을 수 있으니 **null 가드**를 둔다.
+
+## 2단계 요구사항 - 타임아웃 방어 및 멱등 재시도
+
+### 1. RestClient 타임아웃 설정
+- [ ] 토스 호출 `RestClient`에 connect/read timeout을 설정한다 (`spring.http.clients.*` 또는 `SimpleClientHttpRequestFactory`)
+- [ ] 요청 팩토리는 `simple`(또는 `apache`)을 사용한다 (`jdk`는 read timeout 미지원)
+- [ ] 타임아웃 값은 `application.yml`로 외부화한다
+
+### 2. 타임아웃 예외 처리
+- [ ] 연결 실패는 `ResourceAccessException`, 응답 지연은 `RestClientException`으로 구분 처리한다
+- [ ] 토스 에러("거절")와 타임아웃("답 없음")을 구분해 안내한다
+- [ ] read timeout은 "실패"로 단정하지 않고 확인·재시도 가능한 상태로 처리한다
+
+### 3. Idempotency-Key
+- [ ] 주문당 고정 UUID를 생성해 confirm 요청 헤더로 전송한다
+- [ ] 동일 키로 재호출하면 토스가 첫 응답을 그대로 반환해 중복 승인을 막는다
+- [ ] 키는 매 호출이 아닌 주문에 고정한다
+
+### 4. 주문/결제 내역 페이지
+- [ ] 예약 정보와 결제 상태(대기/확정/실패), `orderId`, `paymentKey`, 금액을 표시한다
+- [ ] 결과가 불명확하면 "확인 필요"로 구분해 표시한다 (멱등키로 재시도 안전)
