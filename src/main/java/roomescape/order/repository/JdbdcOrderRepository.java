@@ -86,4 +86,14 @@ public class JdbdcOrderRepository implements OrderRepository{
             throw new OrderNotFoundException();
         }
     }
+
+    @Override
+    public int deleteByOrderId(String orderId) {
+        String sql = """
+               DELETE FROM orders
+               WHERE order_id = ?
+               """;
+
+        return jdbcTemplate.update(sql, orderId);
+    }
 }

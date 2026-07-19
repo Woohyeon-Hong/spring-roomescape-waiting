@@ -1,6 +1,8 @@
 package roomescape.order.controller;
 
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -77,5 +79,15 @@ class OrderControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body)
         ).andExpect(status().isBadRequest());
+    }
+
+    @DisplayName("orderId에 해당하는 주문을 삭제하고 204를 반환한다.")
+    @Test
+    void deleteOrder_success() throws Exception {
+        mockMvc.perform(
+                delete("/orders/{orderId}", "order-id")
+        ).andExpect(status().isNoContent());
+
+        verify(orderService).deleteOrderByOrderId("order-id");
     }
 }

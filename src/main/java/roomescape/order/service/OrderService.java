@@ -3,6 +3,7 @@ package roomescape.order.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import roomescape.order.domain.Order;
+import roomescape.order.exception.OrderAlreadyConfirmedException;
 import roomescape.order.exception.OrderNotFoundException;
 import roomescape.order.exception.PaymentAmountMismatchException;
 import roomescape.order.repository.OrderRepository;
@@ -33,5 +34,16 @@ public class OrderService {
         );
 
         orderRepository.confirmByOrderId(orderId, paymentKey);
+    }
+
+    public void deleteOrderByOrderId(String orderId) {
+        Order order = orderRepository.findByOrderId(orderId)
+                .orElseThrow(OrderNotFoundException::new);
+
+        if (order.isConfirmed()) {
+            throw new OrderAlreadyConfirmedException();
+        }
+
+        orderRepository.deleteByOrderId(orderId);
     }
 }

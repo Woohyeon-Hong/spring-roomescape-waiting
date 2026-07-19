@@ -75,6 +75,5 @@ public class ReservationTimeService {
         } catch (DataIntegrityViolationException e) {
             throw new TimeInUseException();
         }
-
     }
 }

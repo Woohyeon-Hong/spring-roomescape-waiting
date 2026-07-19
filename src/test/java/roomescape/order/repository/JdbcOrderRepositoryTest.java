@@ -78,4 +78,15 @@ class JdbcOrderRepositoryTest {
         // then
         assertThat(saved).isEqualTo(found);
     }
+
+    @DisplayName("orderId를 통해 주문을 삭제하고, 삭제된 row 수를 반환한다.")
+    @Test
+    void deleteByOrderIdTest() {
+        //given
+        Order saved = orderRepository.save(Order.of(1000L));
+
+        //when & then
+        assertThat(orderRepository.deleteByOrderId(saved.getOrderId()))
+                .isEqualTo(1);
+    }
 }

@@ -56,6 +56,6 @@
 
 ### 7. failUrl(취소/실패) 처리
 
-- [ ] `failUrl`로 `code`, `message`, `orderId`가 넘어온다.
-- [ ] 실패 사유를 사용자에게 보여주고 결제 대기 상태의 주문/예약을 정리한다.
-- [ ] 사용자가 취소(`PAY_PROCESS_CANCELED`)하면 `orderId`가 없을 수 있으니 **null 가드**를 둔다.
+- [x] `failUrl`로 `code`, `message`, `orderId`가 넘어온다.
+- [x] 실패 사유를 사용자에게 보여주고 결제 대기 상태의 주문을 정리한다. (order-first 구조상 이 시점엔 예약이 아직 생성되지 않으므로 정리 대상은 주문뿐이다.)
+- [x] 사용자가 취소(`PAY_PROCESS_CANCELED`)하면 `orderId`가 없을 수 있으니 **null 가드**를 둔다.
