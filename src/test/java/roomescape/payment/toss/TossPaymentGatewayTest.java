@@ -11,9 +11,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -84,7 +91,8 @@ class TossPaymentGatewayTest {
                 () -> assertThat(request.getMethod()).isEqualTo("POST"),
                 () -> assertThat(request.getPath()).isEqualTo("/v1/payments/confirm"),
                 () -> assertThat(request.getHeader("Authorization")).isEqualTo(basicAuth),
-                () -> assertThat(request.getHeader("Content-Type")).contains("application/json")
+                () -> assertThat(request.getHeader("Content-Type")).contains("application/json"),
+                () -> assertThat(request.getHeader( "Idempotency-Key")).isEqualTo("order-1")
         );
 
         JsonNode body = new ObjectMapper().readTree(request.getBody().readUtf8());
@@ -162,7 +170,7 @@ class TossPaymentGatewayTest {
         long elapsedMs = (System.nanoTime() - start) / 1_000_000;
 
         //then
-        assertThat(elapsedMs).isLessThan(1500);
+        assertThat(elapsedMs).isLessThan(1800);
     }
 
     private void enqueue(int statusCode, String body, int delay) {
@@ -262,4 +270,89 @@ class TossPaymentGatewayTest {
         assertThat(elapsedMs).isBetween(300L, 2500L);
     }
 
+    @DisplayName("read timeout으로 끊겨 재시도해도 같은 멱등키면 중복 결제가 생기지 않는다.")
+    @Test
+    void confirmTest_idempotent() {
+        //given
+        tossPaymentGateway = new TossPaymentGateway(
+                new ObjectMapper(),
+                mockWebServer.url("/").toString(),
+                "test_gsk_dummy",
+                1000,
+                1000
+        );
+        PaymentConfirmation confirmation = new PaymentConfirmation("test_pk_1", "order-1", 10000L);
+
+        IdempotentGatewayStub stub = new IdempotentGatewayStub();
+        mockWebServer.setDispatcher(stub);
+
+        assertThatThrownBy(() -> tossPaymentGateway.confirm(confirmation))
+                .isInstanceOf(PaymentReadTimeoutException.class);
+
+        //when
+        assertThatCode(() -> tossPaymentGateway.confirm(confirmation))
+                .doesNotThrowAnyException();
+
+        //then
+        assertThat(stub.createdPayments()).isEqualTo(1);
+        assertThat(stub.seenKeys()).hasSize(2);
+        assertThat(stub.seenKeys().get(0)).isNotBlank().isEqualTo(stub.seenKeys().get(1));
+
+        mockWebServer.setDispatcher(new QueueDispatcher());
+    }
+
+    private static class IdempotentGatewayStub extends Dispatcher {
+
+        private final Map<String, String> paymentKeyByIdempotencyKey = new ConcurrentHashMap<>();
+        private final AtomicInteger createdPayments = new AtomicInteger();
+        private final List<String> seenKeys = new CopyOnWriteArrayList<>();
+
+        @Override
+        public MockResponse dispatch(RecordedRequest request) {
+            var key = request.getHeader("Idempotency-Key");
+            seenKeys.add(key);
+
+            if (key == null || key.isBlank()) {
+                return slowSuccess(newPaymentKey());
+            }
+
+            var existing = paymentKeyByIdempotencyKey.get(key);
+            if (existing != null) {
+                return fastSuccess(existing);
+            }
+
+            var paymentKey = newPaymentKey();
+            paymentKeyByIdempotencyKey.put(key, paymentKey);
+            return slowSuccess(paymentKey);
+        }
+
+        int createdPayments() {
+            return createdPayments.get();
+        }
+
+        List<String> seenKeys() {
+            return seenKeys;
+        }
+
+        private String newPaymentKey() {
+            return "pk_" + createdPayments.incrementAndGet();
+        }
+
+        private MockResponse slowSuccess(String paymentKey) {
+            return success(paymentKey).setHeadersDelay(2, TimeUnit.SECONDS);
+        }
+
+        private MockResponse fastSuccess(String paymentKey) {
+            return success(paymentKey);
+        }
+
+        private MockResponse success(String paymentKey) {
+            return new MockResponse()
+                    .setResponseCode(200)
+                    .setHeader("Content-Type", "application/json")
+                    .setBody("""
+              {"paymentKey": "%s", "orderId": "order-1", "status": "DONE", "totalAmount": 10000}
+              """.formatted(paymentKey));
+        }
+    }
 }

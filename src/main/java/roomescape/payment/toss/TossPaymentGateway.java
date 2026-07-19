@@ -30,6 +30,9 @@ import roomescape.payment.exception.PaymentReadTimeoutException;
 @Component
 public class TossPaymentGateway implements PaymentGateway {
 
+    private static final String CONFIRMATION_URL = "/v1/payments/confirm";
+    private static final String IDEMPOTENCY_KEY = "Idempotency-Key";
+
     private final RestClient tossRestClient;
     private final ObjectMapper objectMapper;
 
@@ -70,8 +73,9 @@ public class TossPaymentGateway implements PaymentGateway {
     public void confirm(PaymentConfirmation confirmation) {
         try {
             tossRestClient.post()
-                    .uri("/v1/payments/confirm")
+                    .uri(CONFIRMATION_URL)
                     .contentType(MediaType.APPLICATION_JSON)
+                    .header(IDEMPOTENCY_KEY, confirmation.orderId())
                     .body(confirmation)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, this::handleError)
