@@ -21,6 +21,7 @@ import roomescape.payment.exception.PaymentBadRequestException;
 import roomescape.payment.exception.PaymentNotFoundException;
 import roomescape.payment.exception.PaymentRejectedException;
 import roomescape.payment.exception.PaymentServerErrorException;
+import roomescape.payment.exception.PaymentTimeoutException;
 import roomescape.payment.exception.PaymentUnauthorizedException;
 import roomescape.payment.exception.UnknownPaymentErrorException;
 
@@ -139,6 +140,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UnknownPaymentErrorException.class)
     public ResponseEntity<ErrorResponse> handleUnknownPaymentErrorException(UnknownPaymentErrorException e) {
+        return makeResponse(e, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(PaymentTimeoutException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentTimeoutException(PaymentTimeoutException e) {
         return makeResponse(e, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

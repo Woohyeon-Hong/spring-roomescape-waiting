@@ -9,7 +9,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
@@ -23,10 +22,11 @@ import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.Timeout.ThreadMode;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestClientException;
 import roomescape.payment.PaymentConfirmation;
 import roomescape.payment.exception.PaymentAlreadyProcessedException;
+import roomescape.payment.exception.PaymentConnectionTimeoutException;
+import roomescape.payment.exception.PaymentReadTimeoutException;
+import roomescape.payment.exception.PaymentTimeoutException;
 
 class TossPaymentGatewayTest {
 
@@ -127,7 +127,7 @@ class TossPaymentGatewayTest {
 
 
     @RepeatedTest(10)
-    @DisplayName("결제 승인 요청에서 읽기 타임아웃이 발생하면, readTimeoutMS만큼만 기다렸다가 RestClient예외로 실패한다.")
+    @DisplayName("결제 승인 요청에서 읽기 타임아웃이 발생하면, readTimeoutMS만큼만 기다렸다가 재시도 가능 예외로 실패한다.")
     void confirmTest_read_timeout() {
         //given
         tossPaymentGateway = new TossPaymentGateway(
@@ -157,8 +157,7 @@ class TossPaymentGatewayTest {
 
         assertThatThrownBy(() -> tossPaymentGateway.confirm(
                 new PaymentConfirmation("test_pk_1", "order-1", 10000L)
-        )).isInstanceOf(RestClientException.class)
-                .hasRootCauseInstanceOf(SocketTimeoutException.class);
+        )).isInstanceOf(PaymentReadTimeoutException.class);
 
         long elapsedMs = (System.nanoTime() - start) / 1_000_000;
 
@@ -174,70 +173,70 @@ class TossPaymentGatewayTest {
                 .setBody(body));
     }
 
-//    @DisplayName("결제 승인 요청 시, 느린 호출이 섞여도 타임아웃이 있으면 성공 TPS가 유지된다.")
-//    @Test
-//    void confirmTest_mixed_timeout() {
-//        //given
-//        tossPaymentGateway = new TossPaymentGateway(
-//                new ObjectMapper(),
-//                mockWebServer.url("/").toString(),
-//                "test_gsk_dummy",
-//                1000,
-//                1000
-//        );
-//
-//        for (int i = 0; i < 3; i++) {
-//            enqueue(200, """
-//                    {
-//                      "paymentKey": "test_pk_1",
-//                      "orderId": "order-1",
-//                      "orderName": "방탈출 예약",
-//                      "status": "DONE",
-//                      "totalAmount": 10000,
-//                      "balanceAmount": 10000,
-//                      "method": "카드",
-//                      "approvedAt": "2026-06-08T12:00:00+09:00",
-//                      "requestedAt": "2026-06-08T11:59:30+09:00"
-//                    }
-//                    """, 2);
-//
-//            enqueue(200, """
-//                    {
-//                      "paymentKey": "test_pk_1",
-//                      "orderId": "order-1",
-//                      "orderName": "방탈출 예약",
-//                      "status": "DONE",
-//                      "totalAmount": 10000,
-//                      "balanceAmount": 10000,
-//                      "method": "카드",
-//                      "approvedAt": "2026-06-08T12:00:00+09:00",
-//                      "requestedAt": "2026-06-08T11:59:30+09:00"
-//                    }
-//                    """);
-//
-//        }
-//
-//        //when
-//        long succeeded = 0;
-//        long start = System.nanoTime();
-//
-//        for (int i = 0; i < 6; i++) {
-//            try {
-//                tossPaymentGateway.confirm(
-//                        new PaymentConfirmation("test_pk_1", "order-1", 10000L)
-//                );
-//                succeeded++;
-//            } catch (RestClientException e) {
-//                // 타임아웃으로 일찍 포기한 호출 — 성공 TPS 에 세지 않는다.
-//            }
-//        }
-//
-//        double elapsedSeconds = (System.nanoTime() - start) / 1_000_000_000.0;
-//        double tps = succeeded / elapsedSeconds;
-//
-//        //then
-//        assertThat(tps).isGreaterThan(1.1);
-//    }
+    @DisplayName("결제 승인 요청 시, 느린 호출이 섞여도 타임아웃이 있으면 성공 TPS가 유지된다.")
+    @Test
+    void confirmTest_mixed_timeout() {
+        //given
+        tossPaymentGateway = new TossPaymentGateway(
+                new ObjectMapper(),
+                mockWebServer.url("/").toString(),
+                "test_gsk_dummy",
+                1000,
+                300
+        );
+
+        for (int i = 0; i < 3; i++) {
+            enqueue(200, """
+                    {
+                      "paymentKey": "test_pk_1",
+                      "orderId": "order-1",
+                      "orderName": "방탈출 예약",
+                      "status": "DONE",
+                      "totalAmount": 10000,
+                      "balanceAmount": 10000,
+                      "method": "카드",
+                      "approvedAt": "2026-06-08T12:00:00+09:00",
+                      "requestedAt": "2026-06-08T11:59:30+09:00"
+                    }
+                    """, 2);
+
+            enqueue(200, """
+                    {
+                      "paymentKey": "test_pk_1",
+                      "orderId": "order-1",
+                      "orderName": "방탈출 예약",
+                      "status": "DONE",
+                      "totalAmount": 10000,
+                      "balanceAmount": 10000,
+                      "method": "카드",
+                      "approvedAt": "2026-06-08T12:00:00+09:00",
+                      "requestedAt": "2026-06-08T11:59:30+09:00"
+                    }
+                    """);
+
+        }
+
+        //when
+        long succeeded = 0;
+        long start = System.nanoTime();
+
+        for (int i = 0; i < 6; i++) {
+            try {
+                tossPaymentGateway.confirm(
+                        new PaymentConfirmation("test_pk_1", "order-1", 10000L)
+                );
+                succeeded++;
+            } catch (PaymentTimeoutException e) {
+                // 타임아웃으로 일찍 포기한 호출 — 성공 TPS 에 세지 않는다.
+            }
+        }
+
+        double elapsedSeconds = (System.nanoTime() - start) / 1_000_000_000.0;
+        double tps = succeeded / elapsedSeconds;
+
+        //then
+        assertThat(tps).isGreaterThan(1.1);
+    }
 
     @DisplayName("라우팅이 불가능한 IP로 요청을 보내면, connectTimeoutMs만큼 기다렸다가 SocketTimeout으로 실패한다.")
     @Test
@@ -255,8 +254,7 @@ class TossPaymentGatewayTest {
 
         assertThatThrownBy(() -> gateway.confirm(
                 new PaymentConfirmation("test_pk_1", "order-1", 10000L))
-        ).isInstanceOf(ResourceAccessException.class)
-                .hasCauseInstanceOf(SocketTimeoutException.class);
+        ).isInstanceOf(PaymentConnectionTimeoutException.class);
 
         long elapsedMs = (System.nanoTime() - start) / 1_000_000;
 

@@ -12,3 +12,5 @@ spring:
 toss:
   base-url: https://api.tosspayments.com
   secret-key: test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R
+  connect-timeout-ms: 1000
+  read-timeout-ms: 1000

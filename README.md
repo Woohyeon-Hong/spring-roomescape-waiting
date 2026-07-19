@@ -42,15 +42,15 @@
 - [x] 변환한 예외는 사용자 응답으로도 의미 있게 이어진다(카드* *거절은 안내, 키 오류는 알람 등).
 - [x] `code`별 분기 방향을 자기 서비스에 맞게 설계한다:
 
-| **HTTP** | **code**                                                                | **처리 방향**             |
-|----------|-------------------------------------------------------------------------|-----------------------|
-| 400      | `ALREADY_PROCESSED_PAYMENT`                                             | 이미 승인됨(재시도·새로고침)      |
+| **HTTP** | **code**                                                               | **처리 방향**             |
+|----------|------------------------------------------------------------------------|-----------------------|
+| 400      | `ALREADY_PROCESSED_PAYMENT`                                            | 이미 승인됨(재시도·새로고침)      |
 | 400      | `DUPLICATED_ORDER_ID` / `NOT_FOUND_PAYMENT_SESSION` / `INVALID_REQUEST` | 중복·만료·잘못된 요청          |
-| 401      | `UNAUTHORIZED_KEY` / `INVALID_API_KEY`                                  | 키 설정 오류 — **운영 알람**   |
-| 403      | `REJECT_CARD_PAYMENT`                                                   | 카드 거절 — 사용자 안내        |
-| 404      | `NOT_FOUND_PAYMENT`                                                     | 결제 건 없음               |
-| 500      | `FAILED_PAYMENT_INTERNAL_SYSTEM_PROCESSING`                             | 토스 내부 오류 — **재시도 대상** |
-| 그 외      | 미정의                                                                     | 기본 예외                 |
+| 401      | `UNAUTHORIZED_KEY` / `INVALID_API_KEY`                                 | 키 설정 오류 — **운영 알람**   |
+| 403      | `REJECT_CARD_PAYMENT`                                                  | 카드 거절 — 사용자 안내        |
+| 404      | `NOT_FOUND_PAYMENT`                                                    | 결제 건 없음               |
+| 500      | `FAILED_PAYMENT_INTERNAL_SYSTEM_PROCESSING`                            | 토스 내부 오류 — **재시도 대상** |
+| 그 외      | 미정의                                                                    | 기본 예외                 |
 
 - [x] 정확한 목록은 Toss Payments 에러 코드의 "결제 승인" 섹션을 참고한다.
 
@@ -67,10 +67,16 @@
 - [x] 요청 팩토리는 `simple`(또는 `apache`)을 사용한다 (`jdk`는 read timeout 미지원)
 - [x] 타임아웃 값은 `application.yml`로 외부화한다
 
-### 2. 타임아웃 예외 처리
-- [ ] 연결 실패는 `ResourceAccessException`, 응답 지연은 `RestClientException`으로 구분 처리한다
-- [ ] 토스 에러("거절")와 타임아웃("답 없음")을 구분해 안내한다
-- [ ] read timeout은 "실패"로 단정하지 않고 확인·재시도 가능한 상태로 처리한다
+### 2. 타임아웃·연결 실패 예외를 결제 흐름에서 처리
+
+| **상황**               | **표면화 예외**                | **근본 원인**                                     |
+|----------------------|---------------------------|-----------------------------------------------|
+| 연결 단계 실패(거부/연결 타임아웃) | `ResourceAccessException` | `ConnectException` / `SocketTimeoutException` |
+| 응답 읽기 단계 실패(느린 응답)   | `RestClientException`     | `SocketTimeoutException`                      |
+
+- [x] 위 표의 root cause 기준으로 연결 실패와 응답 지연을 구분 처리한다
+- [x] 이 둘을 1단계의 토스 에러 응답(`{code, message}`)과 **구분**해 사용자에게 적절히 안내한다. 토스 에러는 "거절", 타임아웃은 "답 없음"이다
+- [x] 특히 **read timeout은 "승인됐는지 모르는" 상태**이므로 "결제 실패"라고 단정하지 말고, 결과 확인·재시도가 가능하도록 처리한다
 
 ### 3. Idempotency-Key
 - [ ] 주문당 고정 UUID를 생성해 confirm 요청 헤더로 전송한다
