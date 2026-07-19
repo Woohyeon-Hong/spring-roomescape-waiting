@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import roomescape.payment.PaymentConfirmation;
@@ -21,14 +22,21 @@ public class TossPaymentGateway implements PaymentGateway {
     public TossPaymentGateway(
             ObjectMapper objectMapper,
             @Value("${toss.base-url}") String baseUrl,
-            @Value("${toss.secret-key}") String secret
+            @Value("${toss.secret-key}") String secret,
+            @Value("${toss.connect-timeout-ms}") int connectTimeoutMs,
+            @Value("${toss.read-timeout-ms}") int readTimeoutMs
     ) {
         String basic = Base64.getEncoder()
                 .encodeToString((secret + ":").getBytes(StandardCharsets.UTF_8));
 
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(connectTimeoutMs);
+        factory.setReadTimeout(readTimeoutMs);
+
         this.tossRestClient = RestClient.builder()
                 .baseUrl(baseUrl)
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Basic " + basic)
+                .requestFactory(factory)
                 .build();
         this.objectMapper = objectMapper;
     }

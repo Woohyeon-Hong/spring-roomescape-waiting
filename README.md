@@ -63,9 +63,9 @@
 ## 2단계 요구사항 - 타임아웃 방어 및 멱등 재시도
 
 ### 1. RestClient 타임아웃 설정
-- [ ] 토스 호출 `RestClient`에 connect/read timeout을 설정한다 (`spring.http.clients.*` 또는 `SimpleClientHttpRequestFactory`)
-- [ ] 요청 팩토리는 `simple`(또는 `apache`)을 사용한다 (`jdk`는 read timeout 미지원)
-- [ ] 타임아웃 값은 `application.yml`로 외부화한다
+- [x] 토스 호출 `RestClient`에 connect/read timeout을 설정한다 (`spring.http.clients.*` 또는 `SimpleClientHttpRequestFactory`)
+- [x] 요청 팩토리는 `simple`(또는 `apache`)을 사용한다 (`jdk`는 read timeout 미지원)
+- [x] 타임아웃 값은 `application.yml`로 외부화한다
 
 ### 2. 타임아웃 예외 처리
 - [ ] 연결 실패는 `ResourceAccessException`, 응답 지연은 `RestClientException`으로 구분 처리한다
