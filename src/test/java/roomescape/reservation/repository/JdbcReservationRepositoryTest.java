@@ -118,7 +118,7 @@ class JdbcReservationRepositoryTest {
                 orderId
         );
 
-        return new Order(id, orderId, amount, false);
+        return new Order(id, orderId, amount);
     }
 
     @Test

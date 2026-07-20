@@ -14,8 +14,6 @@ import roomescape.theme.domain.Theme;
 public class JdbcThemeRepository implements ThemeRepository {
 
     private static final RowMapper<Theme> THEME_ROW_MAPPER = (resultSet, rowNum) -> {
-        long amount = resultSet.getLong("amount");
-
         return new Theme(
                 resultSet.getLong("id"),
                 resultSet.getString("name"),

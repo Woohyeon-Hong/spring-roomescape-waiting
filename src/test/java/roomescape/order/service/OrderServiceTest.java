@@ -14,7 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import roomescape.order.domain.Order;
-import roomescape.order.exception.OrderAlreadyConfirmedException;
 import roomescape.order.exception.OrderNotFoundException;
 import roomescape.order.exception.PaymentAmountMismatchException;
 import roomescape.order.repository.OrderRepository;
@@ -49,7 +48,7 @@ class OrderServiceTest {
     void confirm_amount_mismatch() {
         //given
         when(orderRepository.findByOrderId("order-id"))
-                .thenReturn(Optional.of(new Order(1L, "order-id", 1000L, false)));
+                .thenReturn(Optional.of(new Order(1L, "order-id", 1000L)));
 
         //when & then
         assertThatThrownBy(() -> orderService.confirm("order-id", "payment-key", 500L))
@@ -63,7 +62,7 @@ class OrderServiceTest {
     void confirm_success() {
         //given
         when(orderRepository.findByOrderId("order-id"))
-                .thenReturn(Optional.of(new Order(1L, "order-id", 1000L, false)));
+                .thenReturn(Optional.of(new Order(1L, "order-id", 1000L)));
 
         //when
         orderService.confirm("order-id", "payment-key", 1000L);
@@ -77,8 +76,8 @@ class OrderServiceTest {
     @Test
     void deleteOrderByOrderId_success() {
         //given
-        when(orderRepository.findByOrderId("order-id"))
-                .thenReturn(Optional.of(new Order(1L, "order-id", 1000L, false)));
+        when(orderRepository.deleteByOrderId("order-id"))
+                .thenReturn(1);
 
         //when
         orderService.deleteOrderByOrderId("order-id");
@@ -90,28 +89,11 @@ class OrderServiceTest {
     @DisplayName("주문이 없으면 예외가 발생한다.")
     @Test
     void deleteOrderByOrderId_not_found() {
-        //given
-        when(orderRepository.findByOrderId("order-id"))
-                .thenReturn(Optional.empty());
-
-        //when & then
+        //when
         assertThatThrownBy(() -> orderService.deleteOrderByOrderId("order-id"))
                 .isInstanceOf(OrderNotFoundException.class);
 
-        verify(orderRepository, never()).deleteByOrderId(any());
-    }
-
-    @DisplayName("이미 결제가 확정된 주문이면 삭제하지 않고 예외가 발생한다.")
-    @Test
-    void deleteOrderByOrderId_already_confirmed() {
-        //given
-        when(orderRepository.findByOrderId("order-id"))
-                .thenReturn(Optional.of(new Order(1L, "order-id", 1000L, true)));
-
-        //when & then
-        assertThatThrownBy(() -> orderService.deleteOrderByOrderId("order-id"))
-                .isInstanceOf(OrderAlreadyConfirmedException.class);
-
-        verify(orderRepository, never()).deleteByOrderId(any());
+        //then
+        verify(orderRepository).deleteByOrderId("order-id");
     }
 }

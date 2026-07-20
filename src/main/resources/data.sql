@@ -40,12 +40,12 @@ INSERT INTO theme (name, description, thumbnail_url, amount) VALUES
 
 -- 예약 27건과 1:1로 대응하는 주문 (order_id 1~27은 아래 reservation insert의 행 순서와 일치), 이미 결제 확정된 것으로 시딩
 INSERT INTO orders (order_id, amount, is_confirmed) VALUES
-('seed-order-01', 20000, true), ('seed-order-02', 20000, true), ('seed-order-03', 20000, true), ('seed-order-04', 20000, true), ('seed-order-05', 20000, true),
-('seed-order-06', 20000, true), ('seed-order-07', 20000, true), ('seed-order-08', 20000, true), ('seed-order-09', 20000, true), ('seed-order-10', 20000, true),
-('seed-order-11', 20000, true), ('seed-order-12', 20000, true), ('seed-order-13', 20000, true), ('seed-order-14', 20000, true), ('seed-order-15', 20000, true),
-('seed-order-16', 20000, true), ('seed-order-17', 20000, true), ('seed-order-18', 20000, true), ('seed-order-19', 20000, true), ('seed-order-20', 20000, true),
-('seed-order-21', 20000, true), ('seed-order-22', 20000, true), ('seed-order-23', 20000, true), ('seed-order-24', 20000, true), ('seed-order-25', 20000, true),
-('seed-order-26', 20000, true), ('seed-order-27', 20000, true);
+('seed-order-01', 20000), ('seed-order-02', 20000), ('seed-order-03', 20000), ('seed-order-04', 20000), ('seed-order-05', 20000),
+('seed-order-06', 20000), ('seed-order-07', 20000), ('seed-order-08', 20000), ('seed-order-09', 20000), ('seed-order-10', 20000),
+('seed-order-11', 20000), ('seed-order-12', 20000), ('seed-order-13', 20000), ('seed-order-14', 20000), ('seed-order-15', 20000),
+('seed-order-16', 20000), ('seed-order-17', 20000), ('seed-order-18', 20000), ('seed-order-19', 20000), ('seed-order-20', 20000),
+('seed-order-21', 20000), ('seed-order-22', 20000), ('seed-order-23', 20000), ('seed-order-24', 20000), ('seed-order-25', 20000),
+('seed-order-26', 20000), ('seed-order-27', 20000);
 
 INSERT INTO reservation (name, reservation_date, status, time_id, theme_id, order_id) VALUES
 -- 최근 7일 이내 20개 (기준: 2026-05-06)

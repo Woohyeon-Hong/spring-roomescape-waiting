@@ -147,57 +147,6 @@ class JdbcReservationWaitingRepositoryTest {
         );
     }
 
-    @Test
-    @DisplayName("날짜, 시간, 테마를 기반으로 첫번 째 예약 대기를 조회한다.")
-    void findFirstByReservationDateAndTimeIdAndThemeIdTest() {
-        // given
-        ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
-        saveReservationWaiting("brown", LocalDate.of(2024, 5, 1), time, theme);
-        saveReservationWaiting("pobi", LocalDate.of(2024, 5, 1), time, theme);
-
-        // when
-        Optional<ReservationWaiting> result = reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeId(
-                LocalDate.of(2024, 5, 1), time.getId(), theme.getId()
-        );
-
-        // then
-        assertAll(
-                () -> assertThat(result).isPresent(),
-                () -> assertThat(result.get().getName()).isEqualTo("brown"),
-                () -> assertThat(result.get().getTheme().getAmount()).isEqualTo(1000L),
-                () -> assertThat(reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeId(
-                        LocalDate.of(2024, 5, 2), time.getId(), theme.getId()
-                )).isEmpty()
-        );
-    }
-
-    @Test
-    @DisplayName("날짜, 시간, 테마를 기반으로 첫번 째 예약 대기를 락을 걸어 조회한다.")
-    void findFirstByReservationDateAndTimeIdAndThemeIdForUpdateTest() {
-        // given
-        ReservationTime time = createTime(LocalTime.of(10, 0));
-        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
-        ReservationWaiting first = saveReservationWaiting("brown", LocalDate.of(2024, 5, 1), time, theme);
-        saveReservationWaiting("pobi", LocalDate.of(2024, 5, 1), time, theme);
-
-        // when
-        Optional<ReservationWaiting> result =
-                reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(
-                        LocalDate.of(2024, 5, 1), time.getId(), theme.getId()
-                );
-
-        // then
-        assertAll(
-                () -> assertThat(result).isPresent(),
-                () -> assertThat(result.get().getId()).isEqualTo(first.getId()),
-                () -> assertThat(result.get().getTheme().getAmount()).isEqualTo(1000L),
-                () -> assertThat(reservationWaitingRepository.findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(
-                        LocalDate.of(2024, 5, 2), time.getId(), theme.getId()
-                )).isEmpty()
-        );
-    }
-
     @DisplayName("날짜, 시간, 테마, 예약자 이름에 해당하는 예약 대기가 존재하는지 조회한다.")
     @Test
     void existByDateAndTimeIdAndThemeIdAndNameTest() {
@@ -289,7 +238,7 @@ class JdbcReservationWaitingRepositoryTest {
                 Long.class
         );
 
-        return new Order(orderId, order.getOrderId(), order.getAmount(), false);
+        return new Order(orderId, order.getOrderId(), order.getAmount());
     }
 
     private void saveReservation(String name, LocalDate date, ReservationTime time, Theme theme, Order order) {

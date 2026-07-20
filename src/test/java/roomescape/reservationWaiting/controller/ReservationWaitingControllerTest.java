@@ -1,7 +1,6 @@
 package roomescape.reservationWaiting.controller;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -223,51 +222,21 @@ class ReservationWaitingControllerTest {
     @DisplayName("예약 대기를 승격 요청하면 204를 반환한다.")
     @Test
     void promoteMyReservationWaiting_success() throws Exception {
-        String body = """
-                {
-                    "orderId": "order-id"
-                }
-                """;
-
         mockMvc.perform(
                 post("/reservation-waitings/{id}/promote", 1)
                         .header(HttpHeaders.AUTHORIZATION, "brown")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(body)
         ).andExpect(status().isNoContent());
 
-        verify(reservationWaitingService).promoteWaiting(1L, "brown", "order-id");
-    }
-
-    @DisplayName("예약 대기 승격 시, orderId가 없으면 400을 반환한다.")
-    @Test
-    void promoteMyReservationWaiting_no_orderId() throws Exception {
-        String body = """
-                {
-                }
-                """;
-
-        mockMvc.perform(
-                post("/reservation-waitings/{id}/promote", 1)
-                        .header(HttpHeaders.AUTHORIZATION, "brown")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body)
-        ).andExpect(status().isBadRequest());
+        verify(reservationWaitingService).promoteWaiting(1L, "brown");
     }
 
     @DisplayName("예약 대기 승격 시, Authorization 헤더가 없으면 401을 반환한다.")
     @Test
     void promoteMyReservationWaiting_unAuthenticated() throws Exception {
-        String body = """
-                {
-                    "orderId": "order-id"
-                }
-                """;
-
         mockMvc.perform(
                 post("/reservation-waitings/{id}/promote", 1)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(body)
         ).andExpect(status().isUnauthorized());
     }
 }

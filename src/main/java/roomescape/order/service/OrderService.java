@@ -3,7 +3,6 @@ package roomescape.order.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import roomescape.order.domain.Order;
-import roomescape.order.exception.OrderAlreadyConfirmedException;
 import roomescape.order.exception.OrderNotFoundException;
 import roomescape.order.exception.PaymentAmountMismatchException;
 import roomescape.order.repository.OrderRepository;
@@ -16,10 +15,6 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final PaymentGateway paymentGateway;
-
-    public Order makeOrder(Long amount) {
-        return orderRepository.save(Order.of(amount));
-    }
 
     public void confirm(String orderId, String paymentKey, Long amount) {
         Order order = orderRepository.findByOrderId(orderId)
@@ -37,13 +32,11 @@ public class OrderService {
     }
 
     public void deleteOrderByOrderId(String orderId) {
-        Order order = orderRepository.findByOrderId(orderId)
-                .orElseThrow(OrderNotFoundException::new);
+        int affectedRow = orderRepository.deleteByOrderId(orderId);
+        int nonAffected = 0;
 
-        if (order.isConfirmed()) {
-            throw new OrderAlreadyConfirmedException();
+        if (affectedRow == nonAffected) {
+            throw new OrderNotFoundException();
         }
-
-        orderRepository.deleteByOrderId(orderId);
     }
 }

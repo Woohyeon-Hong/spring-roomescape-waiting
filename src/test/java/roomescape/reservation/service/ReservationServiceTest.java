@@ -24,9 +24,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import roomescape.auth.exception.AuthorizationException;
 import roomescape.order.domain.Order;
-import roomescape.order.exception.OrderAmountMismatchException;
-import roomescape.order.exception.OrderNotConfirmedException;
-import roomescape.order.exception.OrderNotFoundException;
 import roomescape.order.repository.OrderRepository;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.domain.ReservationStatus;
@@ -85,7 +82,7 @@ class ReservationServiceTest {
         //when & then
         assertThatThrownBy(() -> reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 15), 1L, 1L, "order-id"
+                        "brown", LocalDate.of(2026, 5, 15), 1L, 1L
                 )
         )).isInstanceOf(DuplicateReservationException.class);
     }
@@ -103,7 +100,7 @@ class ReservationServiceTest {
         //when & then
         assertThatThrownBy(() -> reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 15), 1L, 1L, "order-id"
+                        "brown", LocalDate.of(2026, 5, 15), 1L, 1L
                 )
         )).isInstanceOf(ReservationSlotHasWaitingException.class);
     }
@@ -124,7 +121,7 @@ class ReservationServiceTest {
         //when & then
         assertThatThrownBy(() -> reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 15), 1L, 1L, "order-id"
+                        "brown", LocalDate.of(2026, 5, 15), 1L, 1L
                 )
         )).isInstanceOf(TimeNotFoundException.class);
     }
@@ -151,7 +148,7 @@ class ReservationServiceTest {
         //when & then
         assertThatThrownBy(() -> reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 15), 1L, 1L, "order-id"
+                        "brown", LocalDate.of(2026, 5, 15), 1L, 1L
                 )
         )).isInstanceOf(InvalidReservationDateValueException.class);
     }
@@ -177,109 +174,15 @@ class ReservationServiceTest {
         //when & then
         assertThatThrownBy(() -> reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 15), 1L, 1L, "order-id"
+                        "brown", LocalDate.of(2026, 5, 15), 1L, 1L
                 )
         )).isInstanceOf(ThemeNotFoundException.class);
-    }
-
-    @DisplayName("예약 생성 시, 주문이 없으면 예외가 발생한다.")
-    @Test
-    void makeReservationTest_no_order() {
-        //given
-        when(reservationRepository.existByDateAndTimeIdAndThemeId(any(), any(), any()
-        )).thenReturn(false);
-
-        when(reservationWaitingRepository.existsByDateAndTimeIdAndThemeId(any(), any(), any()
-        )).thenReturn(false);
-
-        ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
-
-        when(reservationTimeRepository.findById(any()))
-                .thenReturn(Optional.of(time));
-
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
-        when(themeRepository.findById(any()))
-                .thenReturn(Optional.of(theme));
-
-        when(orderRepository.findByOrderId(any()))
-                .thenReturn(Optional.empty());
-
-        //when & then
-        assertThatThrownBy(() -> reservationService.makeReservation(
-                new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 15), 1L, 1L, "order-id"
-                )
-        )).isInstanceOf(OrderNotFoundException.class);
-    }
-
-    @DisplayName("예약 생성 시, 주문이 결제 확정되지 않았으면 예외가 발생한다.")
-    @Test
-    void makeReservationTest_order_not_confirmed() {
-        //given
-        when(reservationRepository.existByDateAndTimeIdAndThemeId(any(), any(), any()
-        )).thenReturn(false);
-
-        when(reservationWaitingRepository.existsByDateAndTimeIdAndThemeId(any(), any(), any()
-        )).thenReturn(false);
-
-        ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
-
-        when(reservationTimeRepository.findById(any()))
-                .thenReturn(Optional.of(time));
-
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
-        when(themeRepository.findById(any()))
-                .thenReturn(Optional.of(theme));
-
-        when(orderRepository.findByOrderId(any()))
-                .thenReturn(Optional.of(Order.of(1000L)));
-
-        //when & then
-        assertThatThrownBy(() -> reservationService.makeReservation(
-                new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 15), 1L, 1L, "order-id"
-                )
-        )).isInstanceOf(OrderNotConfirmedException.class);
-    }
-
-    @DisplayName("예약 생성 시, 주문 금액이 테마 금액과 다르면 예외가 발생한다.")
-    @Test
-    void makeReservationTest_order_amount_mismatch() {
-        //given
-        when(reservationRepository.existByDateAndTimeIdAndThemeId(any(), any(), any()
-        )).thenReturn(false);
-
-        when(reservationWaitingRepository.existsByDateAndTimeIdAndThemeId(any(), any(), any()
-        )).thenReturn(false);
-
-        ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
-
-        when(reservationTimeRepository.findById(any()))
-                .thenReturn(Optional.of(time));
-
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
-        when(themeRepository.findById(any()))
-                .thenReturn(Optional.of(theme));
-
-        when(orderRepository.findByOrderId(any()))
-                .thenReturn(Optional.of(new Order(null, "order-id", 500L, true)));
-
-        //when & then
-        assertThatThrownBy(() -> reservationService.makeReservation(
-                new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 15), 1L, 1L, "order-id"
-                )
-        )).isInstanceOf(OrderAmountMismatchException.class);
     }
 
     @DisplayName("예약 생성을 요청하면, 예약 정보가 생성 및 저장된다.")
     @Test
     void makeReservationTest_success() {
         //given
-        Order order = new Order(null, "order-id", 1000L, true);
-        when(orderRepository.findByOrderId(any()))
-                .thenReturn(Optional.of(order));
-
         when(reservationRepository.existByDateAndTimeIdAndThemeId(any(), any(), any()
         )).thenReturn(false);
 
@@ -294,12 +197,16 @@ class ReservationServiceTest {
         when(themeRepository.findById(any()))
                 .thenReturn(Optional.of(theme));
 
+        Order order = Order.of(1000L);
+        when(orderRepository.save(any()))
+                .thenReturn(order);
+
         Reservation reservation = new Reservation(1L, "brown", LocalDate.of(2026, 5, 15), ReservationStatus.CONFIRMED, time, theme, order);
         when(reservationRepository.save(any()))
                .thenReturn(reservation);
 
         ReservationCommand command = new ReservationCommand(
-                "brown", LocalDate.of(2026, 5, 15), 1L, 1L, "order-id"
+                "brown", LocalDate.of(2026, 5, 15), 1L, 1L
         );
 
         //when

@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import roomescape.auth.annotation.Authenticated;
 import roomescape.auth.annotation.LoginName;
-import roomescape.reservationWaiting.controller.dto.ReservationWaitingPromoteRequest;
 import roomescape.reservationWaiting.controller.dto.ReservationWaitingRequest;
 import roomescape.reservationWaiting.controller.dto.ReservationWaitingResponse;
 import roomescape.reservationWaiting.domain.ReservationWaiting;
@@ -51,7 +50,7 @@ public class ReservationWaitingController {
     @GetMapping("/promotable")
     public ResponseEntity<List<ReservationWaitingResponse>> getMyPromotableReservationWaitings(
             @LoginName String name) {
-        List<ReservationWaitingResponse> responses = reservationWaitingService.findPromotableWaitings(name)
+        List<ReservationWaitingResponse> responses = reservationWaitingService.findPromotableWaitingsByName(name)
                 .stream()
                 .map(ReservationWaitingResponse::from)
                 .toList();
@@ -61,12 +60,8 @@ public class ReservationWaitingController {
 
     @Authenticated
     @PostMapping("/{id}/promote")
-    public ResponseEntity<Void> promoteMyReservationWaiting(
-            @LoginName String name,
-            @PathVariable Long id,
-            @RequestBody ReservationWaitingPromoteRequest request
-    ) {
-        reservationWaitingService.promoteWaiting(id, name, request.orderId());
+    public ResponseEntity<Void> promoteMyReservationWaiting(@LoginName String name, @PathVariable Long id) {
+        reservationWaitingService.promoteWaiting(id, name);
         return ResponseEntity.noContent().build();
     }
 }

@@ -5,10 +5,10 @@ import roomescape.reservation.exception.InvalidReservationNameException;
 import roomescape.reservation.exception.InvalidReservationRequestFormatException;
 import roomescape.reservation.service.dto.ReservationCommand;
 
-public record ReservationRequest(String name, LocalDate date, Long timeId, Long themeId, String orderId) {
+public record ReservationRequest(String name, LocalDate date, Long timeId, Long themeId) {
 
     public ReservationRequest {
-        if (date == null || timeId == null || themeId == null || orderId == null || orderId.isBlank()) {
+        if (date == null || timeId == null || themeId == null) {
             throw new InvalidReservationRequestFormatException();
         }
 
@@ -23,8 +23,7 @@ public record ReservationRequest(String name, LocalDate date, Long timeId, Long 
                 name,
                 date,
                 timeId,
-                themeId,
-                orderId
+                themeId
         );
     }
 }

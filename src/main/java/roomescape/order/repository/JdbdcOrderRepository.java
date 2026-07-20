@@ -17,8 +17,7 @@ public class JdbdcOrderRepository implements OrderRepository{
             new Order(
                     resultSet.getLong("id"),
                     resultSet.getString("order_id"),
-                    resultSet.getLong("amount"),
-                    resultSet.getBoolean("is_confirmed")
+                    resultSet.getLong("amount")
             );
 
     private final JdbcTemplate jdbcTemplate;
@@ -30,8 +29,8 @@ public class JdbdcOrderRepository implements OrderRepository{
     @Override
     public Order save(Order order) {
         String sql = """
-               INSERT INTO orders (order_id, amount, is_confirmed)
-               VALUES (?, ?, ?)
+               INSERT INTO orders (order_id, amount)
+               VALUES (?, ?)
                """;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -40,7 +39,6 @@ public class JdbdcOrderRepository implements OrderRepository{
             PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
             ps.setString(1, order.getOrderId());
             ps.setLong(2, order.getAmount());
-            ps.setBoolean(3, order.isConfirmed());
             return ps;
         }, keyHolder);
 

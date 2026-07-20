@@ -13,8 +13,6 @@ public interface ReservationWaitingRepository {
 
     List<ReservationWaiting> findPromotableByName(String name);
 
-    Optional<ReservationWaiting> findFirstByReservationDateAndTimeIdAndThemeId(LocalDate date, Long timeId, Long themeId);
-
     Optional<ReservationWaiting> findFirstByReservationDateAndTimeIdAndThemeIdForUpdate(LocalDate date, Long timeId, Long themeId);
 
     boolean existByDateAndTimeIdAndThemeIdAndName(LocalDate date, Long timeId, Long themeId, String name);

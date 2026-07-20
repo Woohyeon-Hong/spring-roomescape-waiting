@@ -49,7 +49,7 @@ class JdbcOrderRepositoryTest {
         orderRepository.save(order);
 
         // when & then
-        assertThatThrownBy(() -> orderRepository.save(new Order(null, order.getOrderId(), 2000L, false)))
+        assertThatThrownBy(() -> orderRepository.save(new Order(null, order.getOrderId(), 2000L)))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 

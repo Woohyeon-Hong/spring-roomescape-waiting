@@ -18,7 +18,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.repository.ReservationRepository;
-import roomescape.reservationWaiting.domain.ReservationWaiting;
 import roomescape.reservationWaiting.repository.ReservationWaitingRepository;
 
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
@@ -50,32 +49,8 @@ public abstract class ServiceIntegrationTest {
         assertThat(reservation.getName()).isEqualTo(expectedName);
     }
 
-    protected void assertWaitingNotExists(Long id) {
-        assertThat(reservationWaitingRepository.findById(id)).isEmpty();
-    }
-
     protected void assertWaitingExists(Long id) {
         assertThat(reservationWaitingRepository.findById(id)).isPresent();
-    }
-
-    protected void assertReservationExists(Long id) {
-        assertThat(reservationRepository.findByIdForUpdate(id)).isPresent();
-    }
-
-    protected void assertReservationDate(Long id, LocalDate date) {
-        Optional<Reservation> found = reservationRepository.findByIdForUpdate(id);
-        assertThat(found).isPresent();
-
-        Reservation reservation = found.get();
-        assertThat(reservation.getDate()).isEqualTo(date);
-    }
-
-    protected void assertWaitingDate(Long id, LocalDate date) {
-        Optional<ReservationWaiting> found = reservationWaitingRepository.findById(id);
-        assertThat(found).isPresent();
-
-        ReservationWaiting waiting = found.get();
-        assertThat(waiting.getDate()).isEqualTo(date);
     }
 
     @TestConfiguration

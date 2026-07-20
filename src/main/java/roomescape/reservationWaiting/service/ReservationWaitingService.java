@@ -6,8 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import roomescape.auth.exception.AuthorizationException;
 import roomescape.order.domain.Order;
-import roomescape.order.exception.OrderAmountMismatchException;
-import roomescape.order.exception.OrderNotFoundException;
 import roomescape.order.repository.OrderRepository;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.exception.DuplicateReservationException;
@@ -112,12 +110,12 @@ public class ReservationWaitingService {
         }
     }
 
-    public List<ReservationWaiting> findPromotableWaitings(String name) {
+    public List<ReservationWaiting> findPromotableWaitingsByName(String name) {
         return reservationWaitingRepository.findPromotableByName(name);
     }
 
     @Transactional
-    public void promoteWaiting(Long waitingId, String name, String orderId) {
+    public void promoteWaiting(Long waitingId, String name) {
         ReservationWaiting waiting = reservationWaitingRepository.findById(waitingId)
                 .orElseThrow(ReservationWaitingNotFoundException::new);
 
@@ -133,12 +131,7 @@ public class ReservationWaitingService {
             throw new ReservationWaitingNotPromotableException();
         }
 
-        Order order = orderRepository.findByOrderId(orderId)
-                .orElseThrow(OrderNotFoundException::new);
-
-        if (!order.getAmount().equals(waiting.getTheme().getAmount())) {
-            throw new OrderAmountMismatchException();
-        }
+        Order order = orderRepository.save(Order.of(waiting.getTheme().getAmount()));
 
         int affectedRow = reservationWaitingRepository.deleteById(waiting.getId());
         int nonAffected = 0;

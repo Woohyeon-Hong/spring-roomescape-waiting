@@ -8,7 +8,6 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import roomescape.order.domain.Order;
 import roomescape.order.repository.OrderRepository;
 import roomescape.order.service.OrderService;
 import roomescape.reservation.exception.DuplicateReservationException;
@@ -54,8 +53,6 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
                         "테마", "설명", "url", 1000L
                 )
         );
-        Order order = orderService.makeOrder(1000L);
-        orderRepository.confirmByOrderId(order.getOrderId(), "test-payment-key");
 
         //when
         List<ConcurrentResult> results = ConcurrentExecutor.executeConcurrently(100, () -> {
@@ -64,8 +61,7 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
                         "brown",
                         LocalDate.of(2026, 5, 5),
                         1L,
-                        1L,
-                        order.getOrderId()
+                        1L
                 ));
 
                 return ConcurrentResult.withSuccess();
@@ -102,19 +98,15 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
                         "테마", "설명", "url", 1000L
                 )
         );
-        Order order1 = orderService.makeOrder(1000L);
-        orderRepository.confirmByOrderId(order1.getOrderId(), "test-payment-key");
-        Order order2 = orderService.makeOrder(1000L);
-        orderRepository.confirmByOrderId(order2.getOrderId(), "test-payment-key");
 
         reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L, order1.getOrderId()
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
                 )
         );
         reservationService.makeReservation(
                 new ReservationCommand(
-                        "pobi", LocalDate.of(2026, 5, 5), 2L, 1L, order2.getOrderId()
+                        "pobi", LocalDate.of(2026, 5, 5), 2L, 1L
                 )
         );
 
@@ -159,12 +151,10 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
                         "테마", "설명", "url", 1000L
                 )
         );
-        Order order = orderService.makeOrder(1000L);
-        orderRepository.confirmByOrderId(order.getOrderId(), "test-payment-key");
 
         reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L, order.getOrderId()
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
                 )
         );
 
@@ -201,12 +191,10 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
                         "테마", "설명", "url", 1000L
                 )
         );
-        Order order = orderService.makeOrder(1000L);
-        orderRepository.confirmByOrderId(order.getOrderId(), "test-payment-key");
 
         reservationService.makeReservation(
                 new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L, order.getOrderId()
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
                 )
         );
 

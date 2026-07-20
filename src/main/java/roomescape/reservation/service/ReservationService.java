@@ -8,9 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import roomescape.auth.exception.AuthorizationException;
 import roomescape.order.domain.Order;
-import roomescape.order.exception.OrderAmountMismatchException;
-import roomescape.order.exception.OrderNotConfirmedException;
-import roomescape.order.exception.OrderNotFoundException;
 import roomescape.order.repository.OrderRepository;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.exception.DuplicateReservationException;
@@ -56,6 +53,7 @@ public class ReservationService {
         this.expiryValidator = expiryValidator;
     }
 
+    @Transactional
     public Reservation makeReservation(ReservationCommand command) {
         if (reservationRepository.existByDateAndTimeIdAndThemeId(
                 command.date(), command.timeId(), command.themeId())) {
@@ -70,20 +68,11 @@ public class ReservationService {
         Theme theme = themeRepository.findById(command.themeId())
                 .orElseThrow(ThemeNotFoundException::new);
 
-        Order order = orderRepository.findByOrderId(command.orderId())
-                .orElseThrow(OrderNotFoundException::new);
-
-        if (!order.isConfirmed()) {
-            throw new OrderNotConfirmedException();
-    }
-
-        if (!order.getAmount().equals(theme.getAmount())) {
-            throw new OrderAmountMismatchException();
-        }
+        Order order = orderRepository.save(Order.of(theme.getAmount()));
 
         try {
             return reservationRepository.save(
-                    Reservation.of(command.name(), command.date(), time, theme, order).confirm()
+                    Reservation.of(command.name(), command.date(), time, theme, order)
             );
         } catch (DuplicateKeyException e) {
             throw new DuplicateReservationException();

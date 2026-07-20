@@ -44,8 +44,7 @@ public class JdbcReservationRepository implements ReservationRepository {
             order = new Order(
                     orderId,
                     resultSet.getString("orders_order_id"),
-                    resultSet.getLong("orders_amount"),
-                    resultSet.getBoolean("orders_is_confirmed")
+                    resultSet.getLong("orders_amount")
             );
         }
 
