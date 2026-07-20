@@ -23,6 +23,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import roomescape.order.domain.Order;
 import roomescape.reservation.domain.Reservation;
+import roomescape.reservation.domain.ReservationStatus;
 import roomescape.reservation.service.ReservationService;
 import roomescape.reservation.service.dto.ReservationWithStatusResult;
 import roomescape.theme.domain.Theme;
@@ -46,9 +47,10 @@ class ReservationControllerTest {
                         1L,
                         "brown",
                         LocalDate.of(2026, 6, 1),
+                        ReservationStatus.CONFIRMED,
                         new ReservationTime(1L, LocalTime.of(10, 0)),
                         new Theme(1L, "테마", "설명", "url", 1000L),
-                        new Order(1L, "order-id", 1000L, false)
+                        new Order(1L, "order-id", 1000L, true)
                 ));
 
         String body = """

@@ -47,37 +47,37 @@ INSERT INTO orders (order_id, amount, is_confirmed) VALUES
 ('seed-order-21', 20000, true), ('seed-order-22', 20000, true), ('seed-order-23', 20000, true), ('seed-order-24', 20000, true), ('seed-order-25', 20000, true),
 ('seed-order-26', 20000, true), ('seed-order-27', 20000, true);
 
-INSERT INTO reservation (name, reservation_date, time_id, theme_id, order_id) VALUES
+INSERT INTO reservation (name, reservation_date, status, time_id, theme_id, order_id) VALUES
 -- 최근 7일 이내 20개 (기준: 2026-05-06)
-('Minsu Kim', '2026-05-05', 1, 1, 1),
-('Soyeon Lee', '2026-05-05', 2, 2, 2),
-('Jihoon Park', '2026-05-05', 3, 3, 3),
-('Yujin Choi', '2026-05-05', 4, 4, 4),
-('Haneul Jung', '2026-05-05', 5, 5, 5),
+('Minsu Kim', '2026-05-05', 'CONFIRMED', 1, 1, 1),
+('Soyeon Lee', '2026-05-05', 'CONFIRMED', 2, 2, 2),
+('Jihoon Park', '2026-05-05', 'CONFIRMED', 3, 3, 3),
+('Yujin Choi', '2026-05-05', 'CONFIRMED', 4, 4, 4),
+('Haneul Jung', '2026-05-05', 'CONFIRMED', 5, 5, 5),
 
-('Jimin Han', '2026-05-04', 1, 6, 6),
-('Sehun Oh', '2026-05-04', 2, 7, 7),
-('Areum Yoon', '2026-05-04', 3, 8, 8),
-('Doyoon Kang', '2026-05-04', 4, 9, 9),
-('Yerin Shin', '2026-05-04', 5, 10, 10),
+('Jimin Han', '2026-05-04', 'CONFIRMED', 1, 6, 6),
+('Sehun Oh', '2026-05-04', 'CONFIRMED', 2, 7, 7),
+('Areum Yoon', '2026-05-04', 'CONFIRMED', 3, 8, 8),
+('Doyoon Kang', '2026-05-04', 'CONFIRMED', 4, 9, 9),
+('Yerin Shin', '2026-05-04', 'CONFIRMED', 5, 10, 10),
 
-('Jaehyun Lim', '2026-05-03', 1, 11, 11),
-('Nayeon Song', '2026-05-03', 2, 12, 12),
-('Hyunwoo Jo', '2026-05-03', 3, 13, 13),
-('Sujin Baek', '2026-05-03', 4, 14, 14),
-('Jiho Moon', '2026-05-03', 5, 15, 15),
+('Jaehyun Lim', '2026-05-03', 'CONFIRMED', 1, 11, 11),
+('Nayeon Song', '2026-05-03', 'CONFIRMED', 2, 12, 12),
+('Hyunwoo Jo', '2026-05-03', 'CONFIRMED', 3, 13, 13),
+('Sujin Baek', '2026-05-03', 'CONFIRMED', 4, 14, 14),
+('Jiho Moon', '2026-05-03', 'CONFIRMED', 5, 15, 15),
 
-('Daeun Seo', '2026-05-02', 1, 2, 16),
-('Minjae Kwon', '2026-05-01', 2, 4, 17),
-('Jisu Nam', '2026-04-30', 3, 6, 18),
-('Yejun Hong', '2026-04-29', 4, 8, 19),
-('Dain Yoo', '2026-04-29', 5, 10, 20),
+('Daeun Seo', '2026-05-02', 'CONFIRMED', 1, 2, 16),
+('Minjae Kwon', '2026-05-01', 'CONFIRMED', 2, 4, 17),
+('Jisu Nam', '2026-04-30', 'CONFIRMED', 3, 6, 18),
+('Yejun Hong', '2026-04-29', 'CONFIRMED', 4, 8, 19),
+('Dain Yoo', '2026-04-29', 'CONFIRMED', 5, 10, 20),
 
 -- 7일 이전 7개
-('Taeyoon Jang', '2026-04-28', 1, 3, 21),
-('Seojin Noh', '2026-04-26', 2, 5, 22),
-('Siwoo Ryu', '2026-04-24', 3, 7, 23),
-('Gaeun Bae', '2026-04-21', 4, 9, 24),
-('Hyunseo Ahn', '2026-04-16', 5, 11, 25),
-('Mina Koo', '2026-04-06', 1, 13, 26),
-('Dohyun Cha', '2026-03-22', 2, 15, 27);
+('Taeyoon Jang', '2026-04-28', 'CONFIRMED', 1, 3, 21),
+('Seojin Noh', '2026-04-26', 'CONFIRMED', 2, 5, 22),
+('Siwoo Ryu', '2026-04-24', 'CONFIRMED', 3, 7, 23),
+('Gaeun Bae', '2026-04-21', 'CONFIRMED', 4, 9, 24),
+('Hyunseo Ahn', '2026-04-16', 'CONFIRMED', 5, 11, 25),
+('Mina Koo', '2026-04-06', 'CONFIRMED', 1, 13, 26),
+('Dohyun Cha', '2026-03-22', 'CONFIRMED', 2, 15, 27);

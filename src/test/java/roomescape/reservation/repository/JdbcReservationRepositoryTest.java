@@ -20,6 +20,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import roomescape.order.domain.Order;
 import roomescape.reservation.domain.Reservation;
+import roomescape.reservation.domain.ReservationStatus;
 import roomescape.reservation.exception.ReservationNotFoundException;
 import roomescape.reservation.service.dto.PopularThemeResult;
 import roomescape.reservation.service.dto.ReservationWithStatusResult;
@@ -59,6 +60,7 @@ class JdbcReservationRepositoryTest {
                         null,
                         "brown",
                         LocalDate.of(2024, 5, 1),
+                        ReservationStatus.CONFIRMED,
                         time,
                         theme, 
                         order
@@ -132,6 +134,7 @@ class JdbcReservationRepositoryTest {
                         null,
                         "brown",
                         LocalDate.of(2024, 5, 1),
+                        ReservationStatus.CONFIRMED,
                         time,
                         theme,
                         order1
@@ -146,6 +149,7 @@ class JdbcReservationRepositoryTest {
                         null,
                         "brown",
                         LocalDate.of(2024, 5, 1),
+                        ReservationStatus.CONFIRMED,
                         time,
                         theme,
                         order2
@@ -173,7 +177,7 @@ class JdbcReservationRepositoryTest {
 
     private Reservation saveReservation(String name, LocalDate date, ReservationTime time, Theme theme, Order order) {
         return reservationRepository.save(
-                Reservation.of(name, date, time, theme, order)
+                Reservation.of(name, date, time, theme, order).confirm()
         );
     }
 
@@ -233,6 +237,7 @@ class JdbcReservationRepositoryTest {
                         null,
                         "brown",
                         LocalDate.of(2024, 5, 1),
+                        ReservationStatus.CONFIRMED,
                         time,
                         theme,
                         order
@@ -269,6 +274,7 @@ class JdbcReservationRepositoryTest {
                                 999L,
                                 "brown",
                                 LocalDate.of(2024, 5, 1),
+                                ReservationStatus.CONFIRMED,
                                 time,
                                 theme,
                                 order
@@ -290,6 +296,7 @@ class JdbcReservationRepositoryTest {
                         null,
                         "brown",
                         LocalDate.of(2024, 5, 5),
+                        ReservationStatus.CONFIRMED,
                         time,
                         theme,
                         order1
@@ -303,6 +310,7 @@ class JdbcReservationRepositoryTest {
                         null,
                         "brown",
                         LocalDate.of(2024, 5, 1),
+                        ReservationStatus.CONFIRMED,
                         time,
                         theme,
                         order2
@@ -390,7 +398,6 @@ class JdbcReservationRepositoryTest {
         );
     }
 
-
     @Test
     @DisplayName("같은 슬롯에 대기가 여러 명이면, 본인 이름으로 조회해도 실제 대기열 순번이 반환된다.")
     void findAllByName_waitingOrder_reflects_actual_queue_position() {
@@ -422,35 +429,42 @@ class JdbcReservationRepositoryTest {
     }
 
     @Test
-    @DisplayName("from과 to 사이 일정의 예약들에 대해, 상위 limit 개의 테마들을 조회한다.")
+    @DisplayName("from과 to 사이 일정의 예약 중, 결제 승인된 건을 기준으로 예약이 많은 상위 limit 개의 테마를 순서대로 조회한다.")
     void findPopularThemesTest() {
         // given
-        Theme woowaTheme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
-        Theme pairTheme = createTheme("페어", "페어 전용 테마", "https://pair.com", 1000L);
-        Theme carrotTheme = createTheme("당근", "당근 전용 테마", "https://carrot.com", 1000L);
+        Theme carrotTheme = createTheme("당근", "당근 전용", "https://carrot.com", 1000L); // 삽입 1순위 -> 결과 3위 예상
+        Theme pairTheme = createTheme("페어", "페어 전용", "https://pair.com", 1000L);   // 삽입 2순위 -> 결과 2위 예상
+        Theme woowaTheme = createTheme("우테코", "우테코 전용", "https://woowa.com", 1000L); // 삽입 3순위 -> 결과 1위 예상
 
         ReservationTime time = createTime(LocalTime.of(10, 0));
+        LocalDate today = LocalDate.now(Clock.fixed(Instant.parse("2026-05-06T00:00:00Z"), ZoneId.of("Asia/Seoul")));
 
-        LocalDate today = LocalDate.now(
-                Clock.fixed(
-                        Instant.parse("2026-05-06T00:00:00Z"),
-                        ZoneId.of("Asia/Seoul")
-                )
-        );
+        // 1. from 경계값 테스트 (-7일)
+        saveReservation("eden", today.minusDays(7), time, woowaTheme, createOrder(1000L));
+        // 2. to 경계값 테스트 (-1일)
+        saveReservation("pobi", today.minusDays(1), time, woowaTheme, createOrder(1000L));
+        saveReservation("jason", today.minusDays(3), time, woowaTheme, createOrder(1000L));
+        // => 우테코 총 3건 (1위 보장)
 
-        saveReservation("brown",today.minusDays(1), time, woowaTheme, createOrder(1000L));
-        saveReservation("pobi",today.minusDays(2), time, woowaTheme, createOrder(1000L));
-        saveReservation("jason",today.minusDays(3), time, woowaTheme, createOrder(1000L));
-        saveReservation("eden", today.minusDays(1), time, pairTheme, createOrder(1000L));
         saveReservation("lea", today.minusDays(2), time, pairTheme, createOrder(1000L));
-        saveReservation("wedge", today.minusDays(1), time, carrotTheme, createOrder(1000L));
-        saveReservation("todayReservation", today, time, carrotTheme, createOrder(1000L));
-        saveReservation("outOfRangeReservation", today.minusDays(8), time, carrotTheme, createOrder(1000L));
+        saveReservation("brown", today.minusDays(4), time, pairTheme, createOrder(1000L));
+        // => 페어 총 2건 (2위 보장)
+
+        saveReservation("wedge", today.minusDays(5), time, carrotTheme, createOrder(1000L));
+        // => 당근 총 1건 (3위 보장)
+
+        // 만약 Pending이 카운트된다면 당근 테마가 4건이 되어 1위로 올라가므로 테스트가 즉시 실패함.
+        saveReservationAsPending("pending1", today.minusDays(2), time, carrotTheme, createOrder(1000L));
+        saveReservationAsPending("pending2", today.minusDays(3), time, carrotTheme, createOrder(1000L));
+        saveReservationAsPending("pending3", today.minusDays(4), time, carrotTheme, createOrder(1000L));
+
+        saveReservation("outOfRange", today.minusDays(8), time, pairTheme, createOrder(1000L));
+        saveReservation("todayRes", today, time, pairTheme, createOrder(1000L));
 
         // when
         List<PopularThemeResult> popularThemes = reservationRepository.findPopularThemes(
-                LocalDate.of(2026, 4, 29),
-                LocalDate.of(2026, 5, 5),
+                today.minusDays(7),
+                today.minusDays(1),
                 2
         );
 
@@ -458,6 +472,12 @@ class JdbcReservationRepositoryTest {
         assertThat(popularThemes)
                 .extracting(PopularThemeResult::name)
                 .containsExactly("우테코", "페어");
+    }
+
+    private Reservation saveReservationAsPending(String name, LocalDate date, ReservationTime time, Theme theme, Order order) {
+        return reservationRepository.save(
+                Reservation.of(name, date, time, theme, order)
+        );
     }
 
     @DisplayName("name, date, themeId, timeId가 같고 id가 다른 예약이 있는지 조회한다.")

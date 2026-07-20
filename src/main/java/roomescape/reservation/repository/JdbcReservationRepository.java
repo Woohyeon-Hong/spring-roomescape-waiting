@@ -13,6 +13,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import roomescape.order.domain.Order;
 import roomescape.reservation.domain.Reservation;
+import roomescape.reservation.domain.ReservationStatus;
 import roomescape.reservation.exception.ReservationNotFoundException;
 import roomescape.reservation.service.dto.PopularThemeResult;
 import roomescape.reservation.service.dto.ReservationWithStatusResult;
@@ -52,6 +53,7 @@ public class JdbcReservationRepository implements ReservationRepository {
                 resultSet.getLong("reservation_id"),
                 resultSet.getString("reservation_name"),
                 resultSet.getDate("reservation_date").toLocalDate(),
+                ReservationStatus.valueOf(resultSet.getString("reservation_status")),
                 time,
                 theme,
                 order
@@ -63,8 +65,8 @@ public class JdbcReservationRepository implements ReservationRepository {
     @Override
     public Reservation save(Reservation reservation) {
         String sql = """
-                INSERT INTO reservation (name, reservation_date, time_id, theme_id, order_id)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO reservation (name, reservation_date, status, time_id, theme_id, order_id)
+                VALUES (?, ?, ?, ?, ?, ?)
                 """;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -73,12 +75,13 @@ public class JdbcReservationRepository implements ReservationRepository {
             PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
             ps.setString(1, reservation.getName());
             ps.setDate(2, Date.valueOf(reservation.getDate()));
-            ps.setLong(3, reservation.getReservationTime().getId());
-            ps.setLong(4, reservation.getTheme().getId());
+            ps.setString(3, reservation.getStatus().name());
+            ps.setLong(4, reservation.getReservationTime().getId());
+            ps.setLong(5, reservation.getTheme().getId());
             if (reservation.getOrder() != null) {
-                ps.setLong(5, reservation.getOrder().getId());
+                ps.setLong(6, reservation.getOrder().getId());
             } else {
-                ps.setNull(5, java.sql.Types.BIGINT);
+                ps.setNull(6, java.sql.Types.BIGINT);
             }
             return ps;
         }, keyHolder);
@@ -174,6 +177,7 @@ public class JdbcReservationRepository implements ReservationRepository {
         SELECT r.id AS reservation_id,
                r.name AS reservation_name,
                r.reservation_date,
+               r.status AS reservation_status,
                r.time_id,
                t.start_at AS time_start_at,
                h.id AS theme_id,
@@ -206,6 +210,7 @@ public class JdbcReservationRepository implements ReservationRepository {
         SELECT r.id AS reservation_id,
                r.name AS reservation_name,
                r.reservation_date,
+               r.status AS reservation_status,
                r.time_id,
                t.start_at AS time_start_at,
                h.id AS theme_id,
@@ -252,6 +257,7 @@ public class JdbcReservationRepository implements ReservationRepository {
         SELECT r.id AS reservation_id,
                r.name AS reservation_name,
                r.reservation_date,
+               r.status AS reservation_status,
                r.time_id,
                t.start_at AS time_start_at,
                h.id AS theme_id,
@@ -289,6 +295,7 @@ public class JdbcReservationRepository implements ReservationRepository {
           ON r.theme_id = t.id
         WHERE r.reservation_date >= ?
           AND r.reservation_date <= ?
+          AND r.status = 'CONFIRMED'
         GROUP BY t.id,
                  t.name,
                  t.description,
@@ -332,7 +339,7 @@ public class JdbcReservationRepository implements ReservationRepository {
     public void update(Reservation reservation) {
         String sql = """
                 UPDATE reservation
-                SET name = ?, reservation_date = ?, time_id = ?, theme_id = ?
+                SET name = ?, reservation_date = ?, status = ?, time_id = ?, theme_id = ?
                 WHERE id = ?
                 """;
 
@@ -340,6 +347,7 @@ public class JdbcReservationRepository implements ReservationRepository {
                 sql,
                 reservation.getName(),
                 reservation.getDate(),
+                reservation.getStatus().name(),
                 reservation.getReservationTime().getId(),
                 reservation.getTheme().getId(),
                 reservation.getId()

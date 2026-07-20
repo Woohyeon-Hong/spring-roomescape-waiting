@@ -83,7 +83,7 @@ public class ReservationService {
 
         try {
             return reservationRepository.save(
-                    Reservation.of(command.name(), command.date(), time, theme, order)
+                    Reservation.of(command.name(), command.date(), time, theme, order).confirm()
             );
         } catch (DuplicateKeyException e) {
             throw new DuplicateReservationException();

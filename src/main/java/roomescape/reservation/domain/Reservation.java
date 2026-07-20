@@ -11,22 +11,36 @@ public class Reservation {
     private final Long id;
     private final String name;
     private final LocalDate date;
+    private final ReservationStatus status;
     private final ReservationTime reservationTime;
     private final Theme theme;
     private final Order order;
 
-    public Reservation(Long id, String name, LocalDate date,
+    public Reservation(Long id, String name, LocalDate date, ReservationStatus status,
                        ReservationTime reservationTime, Theme theme, Order order) {
         this.id = id;
         this.name = name;
         this.date = date;
+        this.status = status;
         this.reservationTime = reservationTime;
         this.theme = theme;
         this.order = order;
     }
 
     public static Reservation of(String name, LocalDate date, ReservationTime time, Theme theme, Order order) {
-        return new Reservation(null, name, date, time, theme, order);
+        return new Reservation(null, name, date, ReservationStatus.PENDING, time, theme, order);
+    }
+
+    public Reservation confirm() {
+        return new Reservation(
+                this.id,
+                this.name,
+                this.date,
+                ReservationStatus.CONFIRMED,
+                this.reservationTime,
+                this.theme,
+                order
+        );
     }
 
     public Reservation updateId(long id) {
@@ -34,6 +48,7 @@ public class Reservation {
                 id,
                 this.name,
                 this.date,
+                this.status,
                 this.reservationTime,
                 this.theme,
                 order
@@ -45,6 +60,7 @@ public class Reservation {
                 this.id,
                 this.name,
                 date,
+                this.status,
                 this.reservationTime,
                 this.theme,
                 order
@@ -56,6 +72,7 @@ public class Reservation {
                 this.id,
                 this.name,
                 this.date,
+                this.status,
                 time,
                 this.theme,
                 order
@@ -76,6 +93,10 @@ public class Reservation {
 
     public LocalDate getDate() {
         return date;
+    }
+
+    public ReservationStatus getStatus() {
+        return status;
     }
 
     public ReservationTime getReservationTime() {

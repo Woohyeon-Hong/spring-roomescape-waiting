@@ -29,6 +29,7 @@ import roomescape.order.exception.OrderNotConfirmedException;
 import roomescape.order.exception.OrderNotFoundException;
 import roomescape.order.repository.OrderRepository;
 import roomescape.reservation.domain.Reservation;
+import roomescape.reservation.domain.ReservationStatus;
 import roomescape.reservation.exception.DuplicateReservationException;
 import roomescape.reservation.exception.InvalidReservationDateValueException;
 import roomescape.reservation.exception.ReservationNotFoundException;
@@ -293,7 +294,7 @@ class ReservationServiceTest {
         when(themeRepository.findById(any()))
                 .thenReturn(Optional.of(theme));
 
-        Reservation reservation = new Reservation(1L, "brown", LocalDate.of(2026, 5, 15), time, theme, order);
+        Reservation reservation = new Reservation(1L, "brown", LocalDate.of(2026, 5, 15), ReservationStatus.CONFIRMED, time, theme, order);
         when(reservationRepository.save(any()))
                .thenReturn(reservation);
 
@@ -425,6 +426,7 @@ class ReservationServiceTest {
                         1L,
                         "brown",
                         originalDate,
+                        ReservationStatus.CONFIRMED,
                         originalTime,
                         theme, null
                 )));
@@ -473,6 +475,7 @@ class ReservationServiceTest {
                         1L,
                         "brown",
                         date,
+                        ReservationStatus.CONFIRMED,
                         time,
                         theme, null
                 )));
@@ -507,6 +510,7 @@ class ReservationServiceTest {
                         1L,
                         "brown",
                         LocalDate.of(2026, 5, 16),
+                        ReservationStatus.CONFIRMED,
                         new ReservationTime(1L, LocalTime.of(11, 0)),
                         new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L), null
                 )));
@@ -530,6 +534,7 @@ class ReservationServiceTest {
                         1L,
                         "brown",
                         LocalDate.of(2026, 5, 16),
+                        ReservationStatus.CONFIRMED,
                         new ReservationTime(1L, LocalTime.of(11, 0)),
                         new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L), null
                 )));
@@ -552,6 +557,7 @@ class ReservationServiceTest {
                         1L,
                         "brown",
                         LocalDate.of(2026, 5, 16),
+                        ReservationStatus.CONFIRMED,
                         new ReservationTime(1L, LocalTime.of(11, 0)),
                         new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L), null
                 )));
@@ -575,6 +581,7 @@ class ReservationServiceTest {
                         1L,
                         "brown",
                         LocalDate.of(2026, 5, 16),
+                        ReservationStatus.CONFIRMED,
                         new ReservationTime(1L, LocalTime.of(11, 0)),
                         new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L), null
                 )));
@@ -610,6 +617,7 @@ class ReservationServiceTest {
                         1L,
                         "brown",
                         LocalDate.of(2026, 5, 15),
+                        ReservationStatus.CONFIRMED,
                         new ReservationTime(1L, LocalTime.of(10, 0)),
                         new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L), null
                 )));
@@ -637,6 +645,7 @@ class ReservationServiceTest {
                         1L,
                         "brown",
                         LocalDate.of(2026, 5, 15),
+                        ReservationStatus.CONFIRMED,
                         new ReservationTime(1L, LocalTime.of(10, 0)),
                         new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L), null
                 )));
@@ -677,6 +686,7 @@ class ReservationServiceTest {
                         1L,
                         "brown",
                         LocalDate.of(2026, 5, 15),
+                        ReservationStatus.CONFIRMED,
                         new ReservationTime(1L, LocalTime.of(10, 0)),
                         new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L), null
                 )));
@@ -709,6 +719,7 @@ class ReservationServiceTest {
                         1L,
                         "brown",
                         date,
+                        ReservationStatus.CONFIRMED,
                         time,
                         theme, null
                 )));
@@ -741,6 +752,7 @@ class ReservationServiceTest {
                         1L,
                         "brown",
                         date,
+                        ReservationStatus.CONFIRMED,
                         time,
                         theme, null
                 )));
@@ -763,6 +775,7 @@ class ReservationServiceTest {
                         1L,
                         "brown",
                         date,
+                        ReservationStatus.CONFIRMED,
                         time,
                         theme, null
                 )));

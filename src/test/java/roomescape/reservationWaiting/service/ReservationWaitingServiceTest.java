@@ -26,6 +26,7 @@ import roomescape.order.exception.OrderAmountMismatchException;
 import roomescape.order.exception.OrderNotFoundException;
 import roomescape.order.repository.OrderRepository;
 import roomescape.reservation.domain.Reservation;
+import roomescape.reservation.domain.ReservationStatus;
 import roomescape.reservation.exception.InvalidReservationDateValueException;
 import roomescape.reservation.repository.ReservationRepository;
 import roomescape.reservation.service.ExpiryValidator;
@@ -87,7 +88,7 @@ class ReservationWaitingServiceTest {
 
         when(reservationRepository.findByDateAndTimeIdAndThemeIdForUpdate(
                 any(), any(), any())
-        ).thenReturn(Optional.of(new Reservation(1L, "pobi", LocalDate.of(2026, 5, 15), time, theme, null)));
+        ).thenReturn(Optional.of(new Reservation(1L, "pobi", LocalDate.of(2026, 5, 15), ReservationStatus.CONFIRMED, time, theme, null)));
 
         when(reservationWaitingRepository.save(any()))
                 .thenReturn(new ReservationWaiting(1L, "brown", LocalDate.of(2026, 5, 15), time, theme));
@@ -201,7 +202,7 @@ class ReservationWaitingServiceTest {
 
         when(reservationRepository.findByDateAndTimeIdAndThemeIdForUpdate(
                 any(), any(), any())
-        ).thenReturn(Optional.of(new Reservation(1L, "brown", LocalDate.of(2026, 5, 15), time, theme, null)));
+        ).thenReturn(Optional.of(new Reservation(1L, "brown", LocalDate.of(2026, 5, 15), ReservationStatus.CONFIRMED, time, theme, null)));
 
         //when & then
         assertThatThrownBy(() -> reservationWaitingService.makeReservationWaiting(
