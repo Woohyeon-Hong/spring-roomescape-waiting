@@ -108,7 +108,7 @@ public class JdbcReservationTimeRepository implements ReservationTimeRepository 
               AND w.time_id = t.id
         )
         ORDER BY t.start_at ASC
-           """;
+        """;
 
         RowMapper<AvailableTimeQueryResult> availableTimeRowMapper = (rs, rowNum) ->
                 new AvailableTimeQueryResult(

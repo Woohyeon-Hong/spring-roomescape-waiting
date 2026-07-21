@@ -66,6 +66,7 @@ public class ReservationController {
         reservationService.updateReservation(request.toCommand(), id, name);
         return ResponseEntity.noContent().build();
     }
+    
 
     @Authenticated
     @DeleteMapping("/{id}")

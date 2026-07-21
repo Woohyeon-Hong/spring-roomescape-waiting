@@ -56,11 +56,8 @@ class TossPaymentGatewayTest {
     void confirm_success() throws InterruptedException, JsonProcessingException {
         //given
         tossPaymentGateway = new TossPaymentGateway(
-                new ObjectMapper(),
-                mockWebServer.url("/").toString(),
-                "test_gsk_dummy",
-                1000,
-                1000
+                TossConfig.buildRestClient(mockWebServer.url("/").toString(), "test_gsk_dummy", 1000, 1000),
+                new ObjectMapper()
         );
 
         enqueue(200, """
@@ -115,11 +112,8 @@ class TossPaymentGatewayTest {
     void confirm_fail() {
         //given
         tossPaymentGateway = new TossPaymentGateway(
-                new ObjectMapper(),
-                mockWebServer.url("/").toString(),
-                "test_gsk_dummy",
-                1000,
-                1000
+                TossConfig.buildRestClient(mockWebServer.url("/").toString(), "test_gsk_dummy", 1000, 1000),
+                new ObjectMapper()
         );
 
         enqueue(400, """
@@ -139,11 +133,8 @@ class TossPaymentGatewayTest {
     void confirmTest_read_timeout() {
         //given
         tossPaymentGateway = new TossPaymentGateway(
-                new ObjectMapper(),
-                mockWebServer.url("/").toString(),
-                "test_gsk_dummy",
-                1000,
-                1300
+                TossConfig.buildRestClient(mockWebServer.url("/").toString(), "test_gsk_dummy", 1000, 1300),
+                new ObjectMapper()
         );
 
         enqueue(200, """
@@ -186,11 +177,8 @@ class TossPaymentGatewayTest {
     void confirmTest_mixed_timeout() {
         //given
         tossPaymentGateway = new TossPaymentGateway(
-                new ObjectMapper(),
-                mockWebServer.url("/").toString(),
-                "test_gsk_dummy",
-                1000,
-                300
+                TossConfig.buildRestClient(mockWebServer.url("/").toString(), "test_gsk_dummy", 1000, 300),
+                new ObjectMapper()
         );
 
         for (int i = 0; i < 3; i++) {
@@ -254,7 +242,8 @@ class TossPaymentGatewayTest {
         String blackholeUrl = "http://10.255.255.1:81";
 
         TossPaymentGateway gateway = new TossPaymentGateway(
-                new ObjectMapper(), blackholeUrl, "test_gsk_dummy", 500, 500
+                TossConfig.buildRestClient(blackholeUrl, "test_gsk_dummy", 500, 500),
+                new ObjectMapper()
         );
 
         //when
@@ -275,11 +264,8 @@ class TossPaymentGatewayTest {
     void confirmTest_idempotent() {
         //given
         tossPaymentGateway = new TossPaymentGateway(
-                new ObjectMapper(),
-                mockWebServer.url("/").toString(),
-                "test_gsk_dummy",
-                1000,
-                1000
+                TossConfig.buildRestClient(mockWebServer.url("/").toString(), "test_gsk_dummy", 1000, 1000),
+                new ObjectMapper()
         );
         PaymentConfirmation confirmation = new PaymentConfirmation("test_pk_1", "order-1", 10000L);
 

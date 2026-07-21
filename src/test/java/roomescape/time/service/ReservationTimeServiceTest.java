@@ -16,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import roomescape.reservation.exception.InvalidReservationDateValueException;
-import roomescape.theme.repository.ThemeRepository;
 import roomescape.time.domain.ReservationTime;
 import roomescape.time.exception.DuplicateTimeException;
 import roomescape.time.exception.TimeInUseException;
@@ -26,9 +25,6 @@ import roomescape.time.service.dto.ReservationTimeCommand;
 
 @ExtendWith(MockitoExtension.class)
 class ReservationTimeServiceTest {
-
-    @Mock
-    ThemeRepository themeRepository;
 
     @Mock
     ReservationTimeRepository reservationTimeRepository;
@@ -51,7 +47,7 @@ class ReservationTimeServiceTest {
         )).isInstanceOf(DuplicateTimeException.class);
     }
 
-    @DisplayName("주어진 날짜가 오늘이거나 이전이면 예외가 발생한다.")
+    @DisplayName("주어진 날짜가 오늘까지면 예외가 발생한다.")
     @Test
     void findAvailableReservationTimes_invalid_date() {
         //given

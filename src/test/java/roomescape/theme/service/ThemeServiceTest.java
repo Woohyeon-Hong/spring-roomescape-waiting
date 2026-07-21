@@ -23,7 +23,7 @@ class ThemeServiceTest {
     @Mock
     ThemeRepository themeRepository;
 
-    @DisplayName("테마 생성 시, 기존에 이미 동일한 테마가 있으면 예외가 발생한다.")
+    @DisplayName("테마 생성 시, 기존에 이미 동일한 이름의 테마가 있으면 예외가 발생한다.")
     @Test
     void registerTheme_duplicate() {
         //given

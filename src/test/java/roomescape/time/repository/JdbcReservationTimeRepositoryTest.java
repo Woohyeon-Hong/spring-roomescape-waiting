@@ -74,6 +74,12 @@ class JdbcReservationTimeRepositoryTest {
         assertThat(all).isEmpty();
     }
 
+    private ReservationTime createTime(LocalTime time) {
+        return reservationTimeRepository.save(
+                ReservationTime.of(time)
+        );
+    }
+
     @Test
     @DisplayName("ID가 사용되고 있으면 예외가 발생한다.")
     void deleteByIdTest_used() {
@@ -88,6 +94,23 @@ class JdbcReservationTimeRepositoryTest {
         assertThatThrownBy(
                 () -> reservationTimeRepository.deleteById(time.getId())
         ).isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    private Long createOrder(Long amount) {
+        jdbcTemplate.update(
+                "INSERT INTO orders (order_id, amount) VALUES (?, ?)",
+                java.util.UUID.randomUUID().toString(), amount
+        );
+
+        return jdbcTemplate.queryForObject("SELECT MAX(id) FROM orders", Long.class);
+    }
+
+    private void createReservation(String name, ReservationTime time, LocalDate date, Long themeId, Long orderId) {
+        jdbcTemplate.update("""
+            insert into reservation(name, reservation_date, time_id, theme_id, order_id)
+            values (?, ?, ?, ?, ?)
+        """, name, date, time.getId(), themeId, orderId
+        );
     }
 
     @Test
@@ -161,6 +184,20 @@ class JdbcReservationTimeRepositoryTest {
         );
     }
 
+    private Long createTheme(String name, String description, String thumbnailUrl, Long amount) {
+        jdbcTemplate.update("""
+            insert into theme(name, description, thumbnail_url, amount)
+            values (?, ?, ?, ?)
+        """, name, description, thumbnailUrl, amount
+        );
+
+        return jdbcTemplate.queryForObject(
+                "SELECT id FROM theme WHERE name = ?",
+                Long.class,
+                name
+        );
+    }
+
     @Test
     @DisplayName("예약 대기가 있는 시간은 예약 가능한 시간 목록에서 제외된다.")
     void findAvailableTimes_exclude_reservation_waiting() {
@@ -186,43 +223,6 @@ class JdbcReservationTimeRepositoryTest {
                 .toList();
 
         assertThat(times).containsExactly(time3.getStartAt());
-    }
-
-    private ReservationTime createTime(LocalTime time) {
-        return reservationTimeRepository.save(
-                ReservationTime.of(time)
-        );
-    }
-
-    private Long createTheme(String name, String description, String thumbnailUrl, Long amount) {
-        jdbcTemplate.update("""
-            insert into theme(name, description, thumbnail_url, amount)
-            values (?, ?, ?, ?)
-        """, name, description, thumbnailUrl, amount
-        );
-
-        return jdbcTemplate.queryForObject(
-                "SELECT id FROM theme WHERE name = ?",
-                Long.class,
-                name
-        );
-    }
-
-    private Long createOrder(Long amount) {
-        jdbcTemplate.update(
-                "INSERT INTO orders (order_id, amount) VALUES (?, ?)",
-                java.util.UUID.randomUUID().toString(), amount
-        );
-
-        return jdbcTemplate.queryForObject("SELECT MAX(id) FROM orders", Long.class);
-    }
-
-    private void createReservation(String name, ReservationTime time, LocalDate date, Long themeId, Long orderId) {
-        jdbcTemplate.update("""
-            insert into reservation(name, reservation_date, time_id, theme_id, order_id)
-            values (?, ?, ?, ?, ?)
-        """, name, date, time.getId(), themeId, orderId
-        );
     }
 
     private void createReservationWaiting(String name, ReservationTime time, LocalDate date, Long themeId) {
