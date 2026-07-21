@@ -2,6 +2,7 @@ package roomescape.order.repository;
 
 import java.sql.PreparedStatement;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import roomescape.order.domain.Order;
 import roomescape.order.exception.OrderNotFoundException;
 
+@RequiredArgsConstructor
 @Repository
 public class JdbdcOrderRepository implements OrderRepository{
 
@@ -21,10 +23,6 @@ public class JdbdcOrderRepository implements OrderRepository{
             );
 
     private final JdbcTemplate jdbcTemplate;
-
-    public JdbdcOrderRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     public Order save(Order order) {

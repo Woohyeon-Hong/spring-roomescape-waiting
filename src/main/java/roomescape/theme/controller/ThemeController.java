@@ -2,6 +2,7 @@ package roomescape.theme.controller;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,17 +13,13 @@ import roomescape.reservation.service.ReservationService;
 import roomescape.theme.controller.dto.ThemeResponse;
 import roomescape.theme.service.ThemeService;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/themes")
 public class ThemeController {
 
     private final ThemeService themeService;
     private final ReservationService reservationService;
-
-    public ThemeController(ThemeService themeService, ReservationService reservationService) {
-        this.themeService = themeService;
-        this.reservationService = reservationService;
-    }
 
     @GetMapping
     public ResponseEntity<List<ThemeResponse>> getAllThemes() {

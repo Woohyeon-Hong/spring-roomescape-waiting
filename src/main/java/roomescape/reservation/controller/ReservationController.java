@@ -2,6 +2,7 @@ package roomescape.reservation.controller;
 
 import java.net.URI;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,15 +23,12 @@ import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.exception.InvalidReservationRequestFormatException;
 import roomescape.reservation.service.ReservationService;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/reservations")
 public class ReservationController {
 
     private final ReservationService reservationService;
-
-    public ReservationController(ReservationService reservationService) {
-        this.reservationService = reservationService;
-    }
 
     @PostMapping
     public ResponseEntity<ReservationResponse> createReservation(@RequestBody ReservationRequest requestDto) {
@@ -66,7 +64,7 @@ public class ReservationController {
         reservationService.updateReservation(request.toCommand(), id, name);
         return ResponseEntity.noContent().build();
     }
-    
+
 
     @Authenticated
     @DeleteMapping("/{id}")

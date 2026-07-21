@@ -2,8 +2,10 @@ package roomescape.order.domain;
 
 import java.util.Objects;
 import java.util.UUID;
+import lombok.Getter;
 import roomescape.order.exception.InvalidAmountValueException;
 
+@Getter
 public class Order {
 
     private final Long id;
@@ -26,18 +28,6 @@ public class Order {
 
     public Order updateId(Long id) {
         return new Order(id, this.orderId, this.amount);
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getOrderId() {
-        return orderId;
-    }
-
-    public Long getAmount() {
-        return amount;
     }
 
     @Override

@@ -3,6 +3,7 @@ package roomescape.time.controller;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,15 +12,12 @@ import org.springframework.web.bind.annotation.RestController;
 import roomescape.time.controller.dto.ReservationTimeResponse;
 import roomescape.time.service.ReservationTimeService;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/times")
 public class ReservationTimeController {
 
     private final ReservationTimeService reservationTimeService;
-
-    public ReservationTimeController(ReservationTimeService reservationTimeService) {
-        this.reservationTimeService = reservationTimeService;
-    }
 
     @GetMapping
     public ResponseEntity<List<ReservationTimeResponse>> getAllTimes() {

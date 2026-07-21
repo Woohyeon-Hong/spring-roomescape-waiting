@@ -3,6 +3,7 @@ package roomescape.time.service;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -17,18 +18,13 @@ import roomescape.time.exception.TimeNotFoundException;
 import roomescape.time.repository.ReservationTimeRepository;
 import roomescape.time.service.dto.ReservationTimeCommand;
 
+@RequiredArgsConstructor
 @Service
 public class ReservationTimeService {
 
     private final ReservationTimeRepository reservationTimeRepository;
     private final ThemeRepository themeRepository;
     private final Clock clock;
-
-    public ReservationTimeService(ReservationTimeRepository reservationTimeRepository, ThemeRepository themeRepository, Clock clock) {
-        this.reservationTimeRepository = reservationTimeRepository;
-        this.themeRepository = themeRepository;
-        this.clock = clock;
-    }
 
     public ReservationTime registerReservationTime(ReservationTimeCommand command) {
         if (reservationTimeRepository.existByStartAt(command.startAt())) {

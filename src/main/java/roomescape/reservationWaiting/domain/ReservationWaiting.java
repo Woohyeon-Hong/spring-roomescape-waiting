@@ -2,9 +2,11 @@ package roomescape.reservationWaiting.domain;
 
 import java.time.LocalDate;
 import java.util.Objects;
+import lombok.Getter;
 import roomescape.theme.domain.Theme;
 import roomescape.time.domain.ReservationTime;
 
+@Getter
 public class ReservationWaiting {
 
     private final Long id;
@@ -37,26 +39,6 @@ public class ReservationWaiting {
 
     public boolean hasSameName(String other) {
         return name.equals(other);
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public LocalDate getDate() {
-        return date;
-    }
-
-    public ReservationTime getTime() {
-        return time;
-    }
-
-    public Theme getTheme() {
-        return theme;
     }
 
     @Override

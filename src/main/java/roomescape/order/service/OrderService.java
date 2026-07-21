@@ -9,8 +9,8 @@ import roomescape.order.repository.OrderRepository;
 import roomescape.payment.PaymentConfirmation;
 import roomescape.payment.PaymentGateway;
 
-@Service
 @RequiredArgsConstructor
+@Service
 public class OrderService {
 
     private final OrderRepository orderRepository;

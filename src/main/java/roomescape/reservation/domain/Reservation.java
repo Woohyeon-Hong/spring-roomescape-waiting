@@ -2,10 +2,12 @@ package roomescape.reservation.domain;
 
 import java.time.LocalDate;
 import java.util.Objects;
+import lombok.Getter;
 import roomescape.order.domain.Order;
 import roomescape.theme.domain.Theme;
 import roomescape.time.domain.ReservationTime;
 
+@Getter
 public class Reservation {
 
     private final Long id;
@@ -81,34 +83,6 @@ public class Reservation {
 
     public boolean hasSameName(String name) {
         return this.name.equals(name);
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public LocalDate getDate() {
-        return date;
-    }
-
-    public ReservationStatus getStatus() {
-        return status;
-    }
-
-    public ReservationTime getReservationTime() {
-        return reservationTime;
-    }
-
-    public Theme getTheme() {
-        return theme;
-    }
-
-    public Order getOrder() {
-        return order;
     }
 
     @Override

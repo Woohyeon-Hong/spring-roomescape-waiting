@@ -1,6 +1,7 @@
 package roomescape.theme.service;
 
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -11,14 +12,11 @@ import roomescape.theme.exception.ThemeNotFoundException;
 import roomescape.theme.repository.ThemeRepository;
 import roomescape.theme.service.dto.ThemeCommand;
 
+@RequiredArgsConstructor
 @Service
 public class ThemeService {
 
     private final ThemeRepository themeRepository;
-
-    public ThemeService(ThemeRepository themeRepository) {
-        this.themeRepository = themeRepository;
-    }
 
     public Theme registerTheme(ThemeCommand command) {
         if (themeRepository.existByName(command.name())) {

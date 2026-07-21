@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -14,6 +15,7 @@ import roomescape.reservationWaiting.domain.ReservationWaiting;
 import roomescape.theme.domain.Theme;
 import roomescape.time.domain.ReservationTime;
 
+@RequiredArgsConstructor
 @Repository
 public class JdbcReservationWaitingRepository implements ReservationWaitingRepository {
 
@@ -41,10 +43,6 @@ public class JdbcReservationWaitingRepository implements ReservationWaitingRepos
     };
 
     private final JdbcTemplate jdbcTemplate;
-
-    public JdbcReservationWaitingRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     public ReservationWaiting save(ReservationWaiting reservationWaiting) {

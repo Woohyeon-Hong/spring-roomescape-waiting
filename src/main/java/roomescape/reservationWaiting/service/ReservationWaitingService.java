@@ -1,6 +1,7 @@
 package roomescape.reservationWaiting.service;
 
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ import roomescape.time.domain.ReservationTime;
 import roomescape.time.exception.TimeNotFoundException;
 import roomescape.time.repository.ReservationTimeRepository;
 
+@RequiredArgsConstructor
 @Service
 public class ReservationWaitingService {
 
@@ -35,20 +37,6 @@ public class ReservationWaitingService {
     private final ThemeRepository themeRepository;
     private final OrderRepository orderRepository;
     private final ExpiryValidator expiryValidator;
-
-    public ReservationWaitingService(ReservationWaitingRepository reservationWaitingRepository,
-                                     ReservationRepository reservationRepository,
-                                     ReservationTimeRepository reservationTimeRepository,
-                                     ThemeRepository themeRepository,
-                                     OrderRepository orderRepository,
-                                    ExpiryValidator expiryValidator) {
-        this.reservationWaitingRepository = reservationWaitingRepository;
-        this.reservationRepository = reservationRepository;
-        this.reservationTimeRepository = reservationTimeRepository;
-        this.themeRepository = themeRepository;
-        this.orderRepository = orderRepository;
-        this.expiryValidator = expiryValidator;
-    }
 
     @Transactional
     public ReservationWaiting makeReservationWaiting(ReservationWaitingCommand command) {

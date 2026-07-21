@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import roomescape.time.domain.ReservationTime;
 import roomescape.time.repository.dto.AvailableTimeQueryResult;
 
+@RequiredArgsConstructor
 @Repository
 public class JdbcReservationTimeRepository implements ReservationTimeRepository {
 
@@ -24,10 +26,6 @@ public class JdbcReservationTimeRepository implements ReservationTimeRepository 
     );
 
     private final JdbcTemplate jdbcTemplate;
-
-    public JdbcReservationTimeRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     public ReservationTime save(ReservationTime reservationTime) {

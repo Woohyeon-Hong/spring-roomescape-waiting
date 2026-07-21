@@ -3,6 +3,7 @@ package roomescape.reservation.service;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ import roomescape.time.domain.ReservationTime;
 import roomescape.time.exception.TimeNotFoundException;
 import roomescape.time.repository.ReservationTimeRepository;
 
+@RequiredArgsConstructor
 @Service
 public class ReservationService {
 
@@ -36,22 +38,6 @@ public class ReservationService {
     private final OrderRepository orderRepository;
     private final Clock clock;
     private final ExpiryValidator expiryValidator;
-
-
-    public ReservationService(ReservationRepository reservationRepository,
-                              ReservationWaitingRepository reservationWaitingRepository,
-                              ReservationTimeRepository reservationTimeRepository, ThemeRepository themeRepository,
-                              OrderRepository orderRepository,
-                              Clock clock,
-                              ExpiryValidator expiryValidator) {
-        this.reservationRepository = reservationRepository;
-        this.reservationWaitingRepository = reservationWaitingRepository;
-        this.reservationTimeRepository = reservationTimeRepository;
-        this.themeRepository = themeRepository;
-        this.orderRepository = orderRepository;
-        this.clock = clock;
-        this.expiryValidator = expiryValidator;
-    }
 
     @Transactional
     public Reservation makeReservation(ReservationCommand command) {

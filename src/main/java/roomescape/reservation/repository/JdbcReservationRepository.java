@@ -20,8 +20,8 @@ import roomescape.reservation.service.dto.ReservationWithStatusResult;
 import roomescape.theme.domain.Theme;
 import roomescape.time.domain.ReservationTime;
 
-@Repository
 @RequiredArgsConstructor
+@Repository
 public class JdbcReservationRepository implements ReservationRepository {
 
     private static final RowMapper<Reservation> RESERVATION_ROW_MAPPER = (resultSet, rowNum) -> {

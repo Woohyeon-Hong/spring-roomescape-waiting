@@ -2,6 +2,7 @@ package roomescape.reservationWaiting.controller;
 
 import java.net.URI;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,15 +18,12 @@ import roomescape.reservationWaiting.controller.dto.ReservationWaitingResponse;
 import roomescape.reservationWaiting.domain.ReservationWaiting;
 import roomescape.reservationWaiting.service.ReservationWaitingService;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/reservation-waitings")
 public class ReservationWaitingController {
 
     private final ReservationWaitingService reservationWaitingService;
-
-    public ReservationWaitingController(ReservationWaitingService reservationWaitingService) {
-        this.reservationWaitingService = reservationWaitingService;
-    }
 
     @PostMapping
     public ResponseEntity<ReservationWaitingResponse> createReservationWaiting(

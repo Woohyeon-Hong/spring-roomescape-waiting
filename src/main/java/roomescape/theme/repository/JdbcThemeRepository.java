@@ -3,6 +3,7 @@ package roomescape.theme.repository;
 import java.sql.PreparedStatement;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -10,6 +11,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import roomescape.theme.domain.Theme;
 
+@RequiredArgsConstructor
 @Repository
 public class JdbcThemeRepository implements ThemeRepository {
 
@@ -24,10 +26,6 @@ public class JdbcThemeRepository implements ThemeRepository {
     };
 
     private final JdbcTemplate jdbcTemplate;
-
-    public JdbcThemeRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     public Theme save(Theme theme) {
