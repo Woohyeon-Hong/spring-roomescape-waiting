@@ -1,5 +1,7 @@
 package roomescape.e2e;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import java.time.LocalDate;
@@ -7,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import roomescape.reservation.domain.Reservation;
+import roomescape.reservation.domain.ReservationStatus;
 
 public class ReservationWaitingE2ETest extends E2ETest {
 
@@ -50,5 +54,43 @@ public class ReservationWaitingE2ETest extends E2ETest {
                 .header("Authorization", "gump")
                 .when().delete("/reservation-waitings/1")
                 .then().statusCode(204);
+    }
+
+    @DisplayName("대기를 승격하면 PENDING 상태로 예약이 생성되고, 결제를 승인해야 CONFIRMED로 전환된다.")
+    @Test
+    void promoteReservationWaitingTest() {
+        //given
+        createReservationTime("10:00");
+        createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/image.png", 1000L);
+
+        createConfirmedReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
+        createReservationWaiting("pobi", LocalDate.of(2026, 5, 5), 1L, 1L);
+
+        RestAssured.given()
+                .header("Authorization", "brown")
+                .when().delete("/reservations/1")
+                .then().statusCode(204);
+
+        //when
+        RestAssured.given()
+                .header("Authorization", "pobi")
+                .when().post("/reservation-waitings/{id}/promote", 1)
+                .then().statusCode(204);
+
+        //then
+        Reservation promoted = reservationRepository
+                .findByDateAndTimeIdAndThemeIdForUpdate(LocalDate.of(2026, 5, 5), 1L, 1L)
+                .orElseThrow();
+
+        assertThat(promoted.hasSameName("pobi")).isTrue();
+        assertThat(promoted.getStatus()).isEqualTo(ReservationStatus.PENDING);
+
+        confirm(promoted.getOrder().getOrderId());
+
+        Reservation confirmed = reservationRepository
+                .findByDateAndTimeIdAndThemeIdForUpdate(LocalDate.of(2026, 5, 5), 1L, 1L)
+                .orElseThrow();
+
+        assertThat(confirmed.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
     }
 }
