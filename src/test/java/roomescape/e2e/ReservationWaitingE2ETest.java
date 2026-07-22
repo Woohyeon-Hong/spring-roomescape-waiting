@@ -16,7 +16,9 @@ class ReservationWaitingE2ETest extends E2ETest {
         //given
         createReservationTime("10:00");
         createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/image.png", 1000L);
-        createReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
+
+        String orderId = createReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
+        confirm(orderId);
 
         Map<String, Object> body = new HashMap<>();
         body.put("name", "pobi");
@@ -38,7 +40,10 @@ class ReservationWaitingE2ETest extends E2ETest {
         //given
         createReservationTime("10:00");
         createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/image.png", 1000L);
-        createReservation("brown", LocalDate.of(2026, 5, 30), 1L, 1L);
+
+        String orderId = createReservation("brown", LocalDate.of(2026, 5, 30), 1L, 1L);
+        confirm(orderId);
+
         createReservationWaiting("gump", LocalDate.of(2026, 5, 30), 1L, 1L);
 
         //when & then

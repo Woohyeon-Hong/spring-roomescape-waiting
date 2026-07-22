@@ -13,13 +13,14 @@ import roomescape.order.exception.OrderNotFoundException;
 
 @RequiredArgsConstructor
 @Repository
-public class JdbdcOrderRepository implements OrderRepository{
+public class JdbcOrderRepository implements OrderRepository{
 
     private static final RowMapper<Order> ORDER_ROW_MAPPER = (resultSet, rowNum) ->
             new Order(
                     resultSet.getLong("id"),
                     resultSet.getString("order_id"),
-                    resultSet.getLong("amount")
+                    resultSet.getLong("amount"),
+                    resultSet.getString("payment_key")
             );
 
     private final JdbcTemplate jdbcTemplate;
@@ -27,8 +28,8 @@ public class JdbdcOrderRepository implements OrderRepository{
     @Override
     public Order save(Order order) {
         String sql = """
-               INSERT INTO orders (order_id, amount)
-               VALUES (?, ?)
+               INSERT INTO orders (order_id, amount, payment_key)
+               VALUES (?, ?, ?)
                """;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -37,6 +38,7 @@ public class JdbdcOrderRepository implements OrderRepository{
             PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
             ps.setString(1, order.getOrderId());
             ps.setLong(2, order.getAmount());
+            ps.setString(3, order.getPaymentKey());
             return ps;
         }, keyHolder);
 
@@ -69,14 +71,15 @@ public class JdbdcOrderRepository implements OrderRepository{
     }
 
     @Override
-    public void confirmByOrderId(String orderId, String paymentKey) {
+    public void update(Order order) {
         String sql = """
                UPDATE orders
-               SET is_confirmed = true, payment_key = ?
-               WHERE order_id = ?
+               SET order_id = ?, amount = ?, payment_key = ?
+               WHERE id = ?
                """;
 
-        int affectedRow = jdbcTemplate.update(sql, paymentKey, orderId);
+        int affectedRow = jdbcTemplate.update(sql, order.getOrderId(),
+                order.getAmount(), order.getPaymentKey(), order.getId());
 
         if (affectedRow == 0) {
             throw new OrderNotFoundException();

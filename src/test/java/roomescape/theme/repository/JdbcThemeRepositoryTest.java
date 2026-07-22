@@ -4,23 +4,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
-import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import roomescape.support.RepositoryTest;
 import roomescape.theme.domain.Theme;
+import roomescape.time.domain.ReservationTime;
 
-@JdbcTest
-class JdbcThemeRepositoryTest {
-
-    @Autowired
-    JdbcTemplate jdbcTemplate;
+class JdbcThemeRepositoryTest extends RepositoryTest {
 
     JdbcThemeRepository themeRepository;
 
@@ -46,74 +42,26 @@ class JdbcThemeRepositoryTest {
     }
 
     @Test
-    @DisplayName("기존에 이미 테마 이름이 겹치는 테마가 있으면 예외가 발생한다.")
+    @DisplayName("기존에 이미 같은 테마가 저장됐으면 예외가 발생한다.")
     void saveTest_duplicate() {
+        // given
+        Theme theme = Theme.of("테마", "설명", "thumbnailUrl", 1000L);
+        themeRepository.save(theme);
+
+        // when & then
+        assertThatThrownBy(() -> themeRepository.save(theme))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    @DisplayName("기존에 이미 테마 이름이 겹치는 테마가 있으면 예외가 발생한다.")
+    void saveTest_duplicate_name() {
         // given
         themeRepository.save(Theme.of("테마", "설명", "thumbnailUrl", 1000L));
 
         // when & then
         assertThatThrownBy(() -> themeRepository.save(Theme.of("테마", "other", "otherThumbnailUrl", 1000L)))
                 .isInstanceOf(DataIntegrityViolationException.class);
-    }
-
-    @Test
-    @DisplayName("ID가 사용되고 있으면 예외가 발생한다.")
-    void deleteByIdTest_used() {
-        //given
-        jdbcTemplate.update(
-                "INSERT INTO reservation_time (start_at) VALUES (?)",
-                Time.valueOf(LocalTime.of(10, 0))
-        );
-
-        long timeId = jdbcTemplate.queryForObject(
-                "SELECT id FROM reservation_time WHERE start_at = ?",
-                Long.class,
-                Time.valueOf(LocalTime.of(10, 0))
-        );
-
-        themeRepository.save(
-                Theme.of("테마", "테마 설명", "썸네일_url", 1000L)
-        );
-
-        Long themeId = jdbcTemplate.queryForObject(
-                "SELECT id FROM theme WHERE name = ?",
-                Long.class,
-                "테마"
-        );
-
-        jdbcTemplate.update(
-                "INSERT INTO orders (order_id, amount) VALUES (?, ?)",
-                java.util.UUID.randomUUID().toString(), 1000L
-        );
-        Long orderId = jdbcTemplate.queryForObject("SELECT MAX(id) FROM orders", Long.class);
-
-        jdbcTemplate.update("""
-            insert into reservation(name, reservation_date, time_id, theme_id, order_id)
-            values (?, ?, ?, ?, ?)
-        """, "brown", LocalDate.of(2026, 5, 6), timeId, themeId, orderId
-        );
-
-        //when & then
-        assertThatThrownBy(
-                () -> themeRepository.deleteById(themeId)
-        ).isInstanceOf(DataIntegrityViolationException.class);
-    }
-
-    @DisplayName("테마 이름을 기준으로 조회한다.")
-    @Test
-    void existByName() {
-        //given
-        themeRepository.save(
-                Theme.of("테마", "테마 설명", "썸네일_url", 1000L)
-        );
-
-        //when & then
-        assertAll(
-                () -> assertThat(themeRepository.existByName("테마"))
-                        .isTrue(),
-                () -> assertThat(themeRepository.existByName("없는_것"))
-                        .isFalse()
-        );
     }
 
     @Test
@@ -134,6 +82,23 @@ class JdbcThemeRepositoryTest {
         );
     }
 
+    @DisplayName("테마 이름을 기준으로 조회한다.")
+    @Test
+    void existByNameTest() {
+        //given
+        themeRepository.save(
+                Theme.of("테마", "테마 설명", "썸네일_url", 1000L)
+        );
+
+        //when & then
+        assertAll(
+                () -> assertThat(themeRepository.existByName("테마"))
+                        .isTrue(),
+                () -> assertThat(themeRepository.existByName("없는_것"))
+                        .isFalse()
+        );
+    }
+
     @Test
     @DisplayName("존재하는 모든 테마 목록을 리스트로 조회한다.")
     void findAllTest() {
@@ -146,5 +111,54 @@ class JdbcThemeRepositoryTest {
 
         // then
         assertThat(result).containsExactly(saved1, saved2);
+    }
+
+    @Test
+    @DisplayName("id로 테마를 삭제한다.")
+    void deleteByIdTest() {
+        //given
+        ReservationTime time = createTime(LocalTime.of(10, 0));
+
+        themeRepository.save(
+                Theme.of("테마", "테마 설명", "썸네일_url", 1000L)
+        );
+        Long themeId = jdbcTemplate.queryForObject(
+                "SELECT id FROM theme WHERE name = ?",
+                Long.class,
+                "테마"
+        );
+
+        //when & then
+        assertThat(themeRepository.deleteById(themeId))
+                .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("ID가 사용되고 있으면 예외가 발생한다.")
+    void deleteByIdTest_used() {
+        //given
+        ReservationTime time = createTime(LocalTime.of(10, 0));
+
+        themeRepository.save(
+                Theme.of("테마", "테마 설명", "썸네일_url", 1000L)
+        );
+        Long themeId = jdbcTemplate.queryForObject(
+                "SELECT id FROM theme WHERE name = ?",
+                Long.class,
+                "테마"
+        );
+
+        Long orderId = createOrder(1000L).getId();
+
+        jdbcTemplate.update("""
+            insert into reservation(name, reservation_date, time_id, theme_id, order_id)
+            values (?, ?, ?, ?, ?)
+        """, "brown", LocalDate.of(2026, 5, 6), time.getId(), themeId, orderId
+        );
+
+        //when & then
+        assertThatThrownBy(
+                () -> themeRepository.deleteById(themeId)
+        ).isInstanceOf(DataIntegrityViolationException.class);
     }
 }

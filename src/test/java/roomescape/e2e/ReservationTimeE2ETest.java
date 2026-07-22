@@ -77,8 +77,11 @@ public class ReservationTimeE2ETest extends E2ETest {
                         )
         );
 
-        createReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
-        createReservation("pobi", LocalDate.of(2026, 5, 6), 2L, 2L);
+        String orderId1 = createReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
+        confirm(orderId1);
+
+        String orderId2 = createReservation("pobi", LocalDate.of(2026, 5, 6), 2L, 2L);
+        confirm(orderId2);
 
         assertAll(
                 () -> assertThat(getAvailableTimes(LocalDate.of(2026, 5, 5), 1L)).hasSize(3),

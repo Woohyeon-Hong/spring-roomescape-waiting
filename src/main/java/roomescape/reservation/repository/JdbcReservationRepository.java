@@ -38,15 +38,13 @@ public class JdbcReservationRepository implements ReservationRepository {
                 resultSet.getLong("theme_amount")
         );
 
-        Order order = null;
-        long orderId = resultSet.getLong("orders_id");
-        if (!resultSet.wasNull()) {
-            order = new Order(
-                    orderId,
-                    resultSet.getString("orders_order_id"),
-                    resultSet.getLong("orders_amount")
-            );
-        }
+
+        Order order = new Order(
+                resultSet.getLong("orders_id"),
+                resultSet.getString("orders_order_id"),
+                resultSet.getLong("orders_amount"),
+                resultSet.getString("orders_payment_key")
+                );
 
         return new Reservation(
                 resultSet.getLong("reservation_id"),
@@ -77,11 +75,8 @@ public class JdbcReservationRepository implements ReservationRepository {
             ps.setString(3, reservation.getStatus().name());
             ps.setLong(4, reservation.getReservationTime().getId());
             ps.setLong(5, reservation.getTheme().getId());
-            if (reservation.getOrder() != null) {
-                ps.setLong(6, reservation.getOrder().getId());
-            } else {
-                ps.setNull(6, java.sql.Types.BIGINT);
-            }
+            ps.setLong(6, reservation.getOrder().getId());
+
             return ps;
         }, keyHolder);
 
@@ -187,7 +182,7 @@ public class JdbcReservationRepository implements ReservationRepository {
                o.id AS orders_id,
                o.order_id AS orders_order_id,
                o.amount AS orders_amount,
-               o.is_confirmed AS orders_is_confirmed
+               o.payment_key AS orders_payment_key
         FROM reservation r
         INNER JOIN reservation_time t
           ON r.time_id = t.id
@@ -220,7 +215,7 @@ public class JdbcReservationRepository implements ReservationRepository {
                o.id AS orders_id,
                o.order_id AS orders_order_id,
                o.amount AS orders_amount,
-               o.is_confirmed AS orders_is_confirmed
+               o.payment_key AS orders_payment_key
         FROM reservation r
         INNER JOIN reservation_time t
           ON r.time_id = t.id
@@ -267,7 +262,7 @@ public class JdbcReservationRepository implements ReservationRepository {
                o.id AS orders_id,
                o.order_id AS orders_order_id,
                o.amount AS orders_amount,
-               o.is_confirmed AS orders_is_confirmed
+               o.payment_key AS orders_payment_key
         FROM reservation r
         INNER JOIN reservation_time t
           ON r.time_id = t.id
@@ -332,6 +327,38 @@ public class JdbcReservationRepository implements ReservationRepository {
 
         Boolean exists = jdbcTemplate.queryForObject(sql, Boolean.class, date, timeId, themeId, id);
         return Boolean.TRUE.equals(exists);
+    }
+
+    @Override
+    public Optional<Reservation> findByOrderId(String orderId) {
+        String sql = """
+        SELECT r.id AS reservation_id,
+               r.name AS reservation_name,
+               r.reservation_date,
+               r.status AS reservation_status,
+               r.time_id,
+               t.start_at AS time_start_at,
+               h.id AS theme_id,
+               h.name AS theme_name,
+               h.description AS theme_description,
+               h.thumbnail_url AS theme_thumbnail_url,
+               h.amount AS theme_amount,
+               o.id AS orders_id,
+               o.order_id AS orders_order_id,
+               o.amount AS orders_amount,
+               o.payment_key AS orders_payment_key
+        FROM reservation r
+        INNER JOIN reservation_time t
+          ON r.time_id = t.id
+        INNER JOIN theme h
+          ON r.theme_id = h.id
+        LEFT JOIN orders o
+          ON r.order_id = o.id
+        WHERE o.order_id = ?
+        """;
+
+        return jdbcTemplate.query(sql, RESERVATION_ROW_MAPPER, orderId)
+                .stream().findFirst();
     }
 
     @Override

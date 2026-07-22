@@ -187,189 +187,6 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
         }
     }
 
-    @DisplayName("예약 대기 생성 중에는 동일 슬롯의 예약을 삭제할 수 없다.")
-    @Test
-    void makeReservationWaitingTest_delete_lock() throws Exception {
-        //given
-        reservationTimeService.registerReservationTime(
-                new ReservationTimeCommand(LocalTime.of(10, 0))
-        );
-        themeService.registerTheme(
-                new ThemeCommand(
-                        "테마", "설명", "url", 1000L
-                )
-        );
-
-        reservationService.makeReservation(
-                new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
-                )
-        );
-
-        ExecutorService executorService = Executors.newFixedThreadPool(2);
-
-        CountDownLatch waitingSaveEntered = new CountDownLatch(1);
-        CountDownLatch allowWaitingSave = new CountDownLatch(1);
-
-        doAnswer(invocation -> {
-            waitingSaveEntered.countDown();
-            assertThat(allowWaitingSave.await(2, TimeUnit.SECONDS)).isTrue();
-            return invocation.callRealMethod();
-        }).when(reservationWaitingRepository).save(any(ReservationWaiting.class));
-
-        try {
-            Future<ReservationWaiting> waitingFuture = executorService.submit(() ->
-                    reservationWaitingService.makeReservationWaiting(
-                            new ReservationWaitingCommand(
-                                    "pobi",
-                                    LocalDate.of(2026, 5, 5),
-                                    1L,
-                                    1L
-                            )
-                    )
-            );
-
-            assertThat(waitingSaveEntered.await(2, TimeUnit.SECONDS)).isTrue();
-
-            Future<?> deleteFuture = executorService.submit(() ->
-                    reservationService.deleteReservationById(RESERVATION_ID)
-            );
-
-            Thread.sleep(200);
-            assertThat(deleteFuture.isDone()).isFalse();
-
-            //when
-            allowWaitingSave.countDown();
-            waitingFuture.get(2, TimeUnit.SECONDS);
-            deleteFuture.get(2, TimeUnit.SECONDS);
-
-            //then
-            assertWaitingExists(WAITING_ID);
-        } finally {
-            executorService.shutdownNow();
-        }
-    }
-
-    @DisplayName("예약 대기 삭제 요청이 동시에 들어오면 하나만 성공하고 나머지는 예외가 발생한다")
-    @Test
-    void deleteReservationWaitingTest_duplicate() throws InterruptedException {
-        //given
-        reservationTimeService.registerReservationTime(
-                new ReservationTimeCommand(LocalTime.of(10, 0))
-        );
-        themeService.registerTheme(
-                new ThemeCommand(
-                        "테마", "설명", "url", 1000L
-                )
-        );
-
-        reservationService.makeReservation(
-                new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
-                )
-        );
-        reservationWaitingService.makeReservationWaiting(
-                new ReservationWaitingCommand(
-                        "pobi", LocalDate.of(2026, 5, 5), 1L, 1L
-                )
-        );
-
-        //when
-        List<ConcurrentResult> results = ConcurrentExecutor.executeConcurrently(100, () -> {
-            try {
-                reservationWaitingService.deleteReservationWaitingById(WAITING_ID, "pobi");
-
-                return ConcurrentResult.withSuccess();
-            } catch (Throwable e) {
-                return ConcurrentResult.withFail(e);
-            }
-        });
-
-        //then
-        assertThat(results).filteredOn(ConcurrentResult::success).hasSize(1);
-
-        assertThat(results).filteredOn(result -> !result.success()).hasSize(99);
-        assertThat(results)
-                .filteredOn(result -> !result.success())
-                .extracting(ConcurrentResult::exception)
-                .allMatch(ReservationWaitingNotFoundException.class::isInstance);
-    }
-
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    @DisplayName("예약 대기 승격 시 예약 저장이 실패하면 대기 삭제가 롤백된다.")
-    @Test
-    void promoteWaitingTest_rolls_back_when_save_fails() {
-        //given
-        reservationTimeService.registerReservationTime(
-                new ReservationTimeCommand(LocalTime.of(10, 0))
-        );
-        themeService.registerTheme(
-                new ThemeCommand(
-                        "테마", "설명", "url", 1000L
-                )
-        );
-
-        reservationService.makeReservation(
-                new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
-                )
-        );
-        reservationWaitingService.makeReservationWaiting(new ReservationWaitingCommand(
-                "pobi",
-                LocalDate.of(2026, 5, 5),
-                1L,
-                1L
-        ));
-        reservationService.deleteReservationById(RESERVATION_ID);
-
-        doThrow(new DuplicateKeyException("duplicate"))
-                .when(reservationRepository)
-                .save(any(Reservation.class));
-
-        //when & then
-        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(WAITING_ID, "pobi"))
-                .isInstanceOf(DuplicateReservationException.class);
-
-        assertWaitingExists(WAITING_ID);
-    }
-
-    @DisplayName("승격 요청 시 주문 저장이 실패하면 대기가 삭제되지 않는다.")
-    @Test
-    void promoteWaitingTest_when_order_save_fails() {
-        //given
-        reservationTimeService.registerReservationTime(
-                new ReservationTimeCommand(LocalTime.of(10, 0))
-        );
-        themeService.registerTheme(
-                new ThemeCommand(
-                        "테마", "설명", "url", 1000L
-                )
-        );
-
-        reservationService.makeReservation(
-                new ReservationCommand(
-                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
-                )
-        );
-        reservationWaitingService.makeReservationWaiting(new ReservationWaitingCommand(
-                "pobi",
-                LocalDate.of(2026, 5, 5),
-                1L,
-                1L
-        ));
-        reservationService.deleteReservationById(RESERVATION_ID);
-
-        doThrow(new DuplicateKeyException("duplicate"))
-                .when(orderRepository)
-                .save(any(Order.class));
-
-        //when & then
-        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(WAITING_ID, "pobi"))
-                .isInstanceOf(DuplicateKeyException.class);
-
-        assertWaitingExists(WAITING_ID);
-    }
-
     @DisplayName("동일한 예약 대기를 동시에 승격 요청하면 하나만 성공하고 나머지는 예외가 발생한다.")
     @Test
     void promoteWaitingTest_concurrent() throws InterruptedException {
@@ -417,9 +234,9 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                 .allMatch(ReservationWaitingNotFoundException.class::isInstance);
     }
 
-    @DisplayName("승격 가능한 예약 대기 목록을 조회하면, 대기열 1순위이면서 슬롯이 비어있는 대기만 반환된다.")
+    @DisplayName("승격 요청 시 주문 저장이 실패하면 대기가 삭제되지 않는다.")
     @Test
-    void findPromotableWaitingsByNameTest() {
+    void promoteWaitingTest_when_order_save_fails() {
         //given
         reservationTimeService.registerReservationTime(
                 new ReservationTimeCommand(LocalTime.of(10, 0))
@@ -441,16 +258,99 @@ public class ReservationWaitingServiceIntegrationTest extends ServiceIntegration
                 1L,
                 1L
         ));
-
-        //when & then
-        assertThat(reservationWaitingService.findPromotableWaitingsByName("pobi")).isEmpty();
-
-        //when
         reservationService.deleteReservationById(RESERVATION_ID);
 
+        doThrow(new DuplicateKeyException("duplicate"))
+                .when(orderRepository)
+                .save(any(Order.class));
+
+        //when & then
+        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(WAITING_ID, "pobi"))
+                .isInstanceOf(DuplicateKeyException.class);
+
+        assertWaitingExists(WAITING_ID);
+    }
+
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @DisplayName("예약 대기 승격 시 예약 저장이 실패하면 대기 삭제가 롤백된다.")
+    @Test
+    void promoteWaitingTest_rolls_back_when_save_fails() {
+        //given
+        reservationTimeService.registerReservationTime(
+                new ReservationTimeCommand(LocalTime.of(10, 0))
+        );
+        themeService.registerTheme(
+                new ThemeCommand(
+                        "테마", "설명", "url", 1000L
+                )
+        );
+
+        reservationService.makeReservation(
+                new ReservationCommand(
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
+                )
+        );
+        reservationWaitingService.makeReservationWaiting(new ReservationWaitingCommand(
+                "pobi",
+                LocalDate.of(2026, 5, 5),
+                1L,
+                1L
+        ));
+        reservationService.deleteReservationById(RESERVATION_ID);
+
+        doThrow(new DuplicateKeyException("duplicate"))
+                .when(reservationRepository)
+                .save(any(Reservation.class));
+
+        //when & then
+        assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(WAITING_ID, "pobi"))
+                .isInstanceOf(DuplicateReservationException.class);
+
+        assertWaitingExists(WAITING_ID);
+    }
+
+    @DisplayName("예약 대기 삭제 요청이 동시에 들어오면 하나만 성공하고 나머지는 예외가 발생한다")
+    @Test
+    void deleteReservationWaitingTest_duplicate() throws InterruptedException {
+        //given
+        reservationTimeService.registerReservationTime(
+                new ReservationTimeCommand(LocalTime.of(10, 0))
+        );
+        themeService.registerTheme(
+                new ThemeCommand(
+                        "테마", "설명", "url", 1000L
+                )
+        );
+
+        reservationService.makeReservation(
+                new ReservationCommand(
+                        "brown", LocalDate.of(2026, 5, 5), 1L, 1L
+                )
+        );
+        reservationWaitingService.makeReservationWaiting(
+                new ReservationWaitingCommand(
+                        "pobi", LocalDate.of(2026, 5, 5), 1L, 1L
+                )
+        );
+
+        //when
+        List<ConcurrentResult> results = ConcurrentExecutor.executeConcurrently(100, () -> {
+            try {
+                reservationWaitingService.deleteReservationWaitingById(WAITING_ID, "pobi");
+
+                return ConcurrentResult.withSuccess();
+            } catch (Throwable e) {
+                return ConcurrentResult.withFail(e);
+            }
+        });
+
         //then
-        assertThat(reservationWaitingService.findPromotableWaitingsByName("pobi"))
-                .extracting(ReservationWaiting::getId)
-                .containsExactly(WAITING_ID);
+        assertThat(results).filteredOn(ConcurrentResult::success).hasSize(1);
+
+        assertThat(results).filteredOn(result -> !result.success()).hasSize(99);
+        assertThat(results)
+                .filteredOn(result -> !result.success())
+                .extracting(ConcurrentResult::exception)
+                .allMatch(ReservationWaitingNotFoundException.class::isInstance);
     }
 }

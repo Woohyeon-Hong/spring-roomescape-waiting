@@ -10,17 +10,15 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import roomescape.order.domain.Order;
+import roomescape.support.RepositoryTest;
+import roomescape.theme.domain.Theme;
 import roomescape.time.domain.ReservationTime;
 import roomescape.time.repository.dto.AvailableTimeQueryResult;
 
-@JdbcTest
-class JdbcReservationTimeRepositoryTest {
-
-    @Autowired
-    JdbcTemplate jdbcTemplate;
+class JdbcReservationTimeRepositoryTest extends RepositoryTest {
 
     ReservationTimeRepository reservationTimeRepository;
 
@@ -61,56 +59,19 @@ class JdbcReservationTimeRepositoryTest {
     }
 
     @Test
-    @DisplayName("ID를 통해 시간 정보를 삭제한다.")
-    void deleteByIdTest() {
+    @DisplayName("기존에 이미 같은 시간이 등록돼 있으면 예외가 발생한다.")
+    void saveTest_duplicate_start_at() {
         // given
-        ReservationTime saved = createTime(LocalTime.of(10, 0));
+        LocalTime startTime = LocalTime.of(10, 0);
+        ReservationTime time = ReservationTime.of(startTime);
 
-        // when
-        reservationTimeRepository.deleteById(saved.getId());
+        reservationTimeRepository.save(time);
 
-        // then
-        List<ReservationTime> all = reservationTimeRepository.findAll();
-        assertThat(all).isEmpty();
-    }
+        ReservationTime other = ReservationTime.of(startTime);
 
-    private ReservationTime createTime(LocalTime time) {
-        return reservationTimeRepository.save(
-                ReservationTime.of(time)
-        );
-    }
-
-    @Test
-    @DisplayName("ID가 사용되고 있으면 예외가 발생한다.")
-    void deleteByIdTest_used() {
-        //given
-        ReservationTime time = createTime(LocalTime.of(10, 0));
-        Long themeId = createTheme("테마", "설명", "url", 1000L);
-        Long orderId = createOrder(1000L);
-
-        createReservation("brown", time, LocalDate.of(2026, 5, 6), themeId, orderId);
-
-        //when & then
-        assertThatThrownBy(
-                () -> reservationTimeRepository.deleteById(time.getId())
-        ).isInstanceOf(DataIntegrityViolationException.class);
-    }
-
-    private Long createOrder(Long amount) {
-        jdbcTemplate.update(
-                "INSERT INTO orders (order_id, amount) VALUES (?, ?)",
-                java.util.UUID.randomUUID().toString(), amount
-        );
-
-        return jdbcTemplate.queryForObject("SELECT MAX(id) FROM orders", Long.class);
-    }
-
-    private void createReservation(String name, ReservationTime time, LocalDate date, Long themeId, Long orderId) {
-        jdbcTemplate.update("""
-            insert into reservation(name, reservation_date, time_id, theme_id, order_id)
-            values (?, ?, ?, ?, ?)
-        """, name, date, time.getId(), themeId, orderId
-        );
+        // when & then
+        assertThatThrownBy(() ->  reservationTimeRepository.save(other))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
@@ -158,7 +119,7 @@ class JdbcReservationTimeRepositoryTest {
 
     @Test
     @DisplayName("예약되지 않은 시간만 조회된다.")
-    void findAvailableTimes() {
+    void findAvailableTimesTest() {
         // given
         ReservationTime time1 = createTime(LocalTime.of(10, 0));
         ReservationTime time2 = createTime(LocalTime.of(11, 0));
@@ -166,13 +127,13 @@ class JdbcReservationTimeRepositoryTest {
 
         LocalDate date = LocalDate.of(2025, 1, 1);
 
-        Long themeId = createTheme("테마", "설명", "url", 1000L);
-        Long orderId = createOrder(1000L);
+        Theme theme = createTheme("테마", "설명", "url", 1000L);
+        Order order = createOrder(1000L);
 
-        createReservation("brown", time1, date, themeId, orderId);
+        createReservation("brown", time1, date, theme, order);
 
         // when
-        List<AvailableTimeQueryResult> result = reservationTimeRepository.findAvailableTimes(themeId, date);
+        List<AvailableTimeQueryResult> result = reservationTimeRepository.findAvailableTimes(theme.getId(), date);
 
         // then
         List<LocalTime> times = result.stream()
@@ -184,38 +145,23 @@ class JdbcReservationTimeRepositoryTest {
         );
     }
 
-    private Long createTheme(String name, String description, String thumbnailUrl, Long amount) {
-        jdbcTemplate.update("""
-            insert into theme(name, description, thumbnail_url, amount)
-            values (?, ?, ?, ?)
-        """, name, description, thumbnailUrl, amount
-        );
-
-        return jdbcTemplate.queryForObject(
-                "SELECT id FROM theme WHERE name = ?",
-                Long.class,
-                name
-        );
-    }
-
     @Test
     @DisplayName("예약 대기가 있는 시간은 예약 가능한 시간 목록에서 제외된다.")
-    void findAvailableTimes_exclude_reservation_waiting() {
+    void findAvailableTimesTest_exclude_reservation_waiting() {
         // given
         ReservationTime time1 = createTime(LocalTime.of(10, 0));
         ReservationTime time2 = createTime(LocalTime.of(11, 0));
         ReservationTime time3 = createTime(LocalTime.of(12, 0));
 
         LocalDate date = LocalDate.of(2025, 1, 1);
+        Theme theme = createTheme("테마", "설명", "url", 1000L);
+        Order order = createOrder(1000L);
 
-        Long themeId = createTheme("테마", "설명", "url", 1000L);
-        Long orderId = createOrder(1000L);
-
-        createReservationWaiting("brown", time1, date, themeId);
-        createReservation("brown", time2, date, themeId, orderId);
+        createReservationWaiting("brown", time1, date, theme);
+        createReservation("brown", time2, date, theme, order);
 
         // when
-        List<AvailableTimeQueryResult> result = reservationTimeRepository.findAvailableTimes(themeId, date);
+        List<AvailableTimeQueryResult> result = reservationTimeRepository.findAvailableTimes(theme.getId(), date);
 
         // then
         List<LocalTime> times = result.stream()
@@ -225,11 +171,33 @@ class JdbcReservationTimeRepositoryTest {
         assertThat(times).containsExactly(time3.getStartAt());
     }
 
-    private void createReservationWaiting(String name, ReservationTime time, LocalDate date, Long themeId) {
-        jdbcTemplate.update("""
-            insert into reservation_waiting(name, reservation_date, time_id, theme_id)
-            values (?, ?, ?, ?)
-        """, name, date, time.getId(), themeId
-        );
+    @Test
+    @DisplayName("ID를 통해 시간 정보를 삭제한다.")
+    void deleteByIdTest() {
+        // given
+        ReservationTime saved = createTime(LocalTime.of(10, 0));
+
+        // when
+        reservationTimeRepository.deleteById(saved.getId());
+
+        // then
+        List<ReservationTime> all = reservationTimeRepository.findAll();
+        assertThat(all).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ID가 사용되고 있으면 예외가 발생한다.")
+    void deleteByIdTest_used() {
+        //given
+        ReservationTime time = createTime(LocalTime.of(10, 0));
+        Theme theme = createTheme("테마", "설명", "url", 1000L);
+        Order order = createOrder(1000L);
+
+        createReservation("brown", time, LocalDate.of(2026, 5, 6), theme, order);
+
+        //when & then
+        assertThatThrownBy(
+                () -> reservationTimeRepository.deleteById(time.getId())
+        ).isInstanceOf(DataIntegrityViolationException.class);
     }
 }

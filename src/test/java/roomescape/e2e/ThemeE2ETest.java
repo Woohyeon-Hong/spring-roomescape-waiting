@@ -50,7 +50,7 @@ public class ThemeE2ETest extends E2ETest {
     @Test
     void readPopular() {
         // given
-        clock.setInstant(Instant.parse("2026-04-23T09:00:00+09:00"));
+        clock.setInstant(Instant.parse("2026-04-22T09:00:00+09:00"));
 
         createReservationTime("10:00");
 
@@ -58,12 +58,23 @@ public class ThemeE2ETest extends E2ETest {
         createTheme("페어 테마", "페어 전용 테마입니다.", "https://example.com/pair.png", 1000L);
         createTheme("당근 테마", "당근 전용 테마입니다.", "https://example.com/carrot.png", 1000L);
 
-        createReservation("brown", LocalDate.of(2026, 4, 29), 1L, 1L);
-        createReservation("pobi", LocalDate.of(2026, 4, 30), 1L, 1L);
-        createReservation("eden", LocalDate.of(2026, 4, 30), 1L, 2L);
-        createReservation("boundaryReservation", LocalDate.of(2026, 4, 24), 1L, 2L);
-        createReservation("todayReservation", LocalDate.of(2026, 5, 1), 1L, 3L);
-        createReservation("outOfRangeReservation", LocalDate.of(2026, 4, 23), 1L, 3L);
+        String orderId1 = createReservation("brown", LocalDate.of(2026, 4, 29), 1L, 1L);
+        confirm(orderId1);
+
+        String orderId2 = createReservation("pobi", LocalDate.of(2026, 4, 30), 1L, 1L);
+        confirm(orderId2);
+
+        String orderId3 = createReservation("eden", LocalDate.of(2026, 4, 30), 1L, 2L);
+        confirm(orderId3);
+
+        String orderId4 = createReservation("boundaryReservation", LocalDate.of(2026, 4, 24), 1L, 2L);
+        confirm(orderId4);
+
+        String orderId5 = createReservation("todayReservation", LocalDate.of(2026, 5, 1), 1L, 3L);
+        confirm(orderId5);
+
+        String orderId6 = createReservation("outOfRangeReservation", LocalDate.of(2026, 4, 23), 1L, 3L);
+        confirm(orderId6);
 
         clock.setInstant(Instant.parse("2026-05-01T09:00:00+09:00"));
 

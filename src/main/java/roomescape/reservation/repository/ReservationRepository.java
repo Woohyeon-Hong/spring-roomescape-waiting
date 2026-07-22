@@ -25,6 +25,8 @@ public interface ReservationRepository {
 
     boolean existByDateAndTimeIdAndThemeIdExceptId(LocalDate date, Long timeId, Long themeId, Long id);
 
+    Optional<Reservation> findByOrderId(String orderId);
+
     void update(Reservation reservation);
 
     int deleteById(Long id);

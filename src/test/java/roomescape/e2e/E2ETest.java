@@ -17,9 +17,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import roomescape.e2e.E2ETest.WebConfig;
-import roomescape.order.domain.Order;
 import roomescape.order.repository.OrderRepository;
+import roomescape.payment.PaymentGateway;
+import roomescape.reservation.domain.Reservation;
+import roomescape.reservation.exception.ReservationNotFoundException;
+import roomescape.reservation.repository.ReservationRepository;
 import roomescape.support.DatabaseHelper;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -35,6 +39,12 @@ public abstract class E2ETest {
 
     @Autowired
     OrderRepository orderRepository;
+
+    @Autowired
+    ReservationRepository reservationRepository;
+
+    @MockitoBean
+    PaymentGateway paymentGateway;
 
     @LocalServerPort
     int port;
@@ -71,28 +81,41 @@ public abstract class E2ETest {
                 .then().statusCode(201);
     }
 
-    protected String createOrder(Long amount) {
-        Order order = orderRepository.save(Order.of(amount));
-        orderRepository.confirmByOrderId(order.getOrderId(), "test-payment-key");
-        return order.getOrderId();
-    }
-
-    protected void createReservation(String name, LocalDate date, Long timeId, Long themeId) {
-        String orderId = createOrder(1000L);
-
+    protected String createReservation(String name, LocalDate date, Long timeId, Long themeId) {
         Map<String, Object> reservation = Map.of(
                 "name", name,
                 "date", date.toString(),
                 "timeId", timeId,
-                "themeId", themeId,
-                "orderId", orderId
+                "themeId", themeId
+        );
+
+        long id = RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body(reservation)
+                .when().post("/reservations")
+                .then().statusCode(201)
+                .extract().jsonPath().getLong("id");
+
+        return reservationRepository.findByIdForUpdate(id)
+                .orElseThrow(ReservationNotFoundException::new)
+                .getOrder().getOrderId();
+    }
+
+    protected void confirm(String orderId) {
+        Reservation reservation = reservationRepository
+                .findByOrderId(orderId)
+                .orElseThrow();
+
+        Map<String, Object> confirmRequest = Map.of(
+                "paymentKey", "test-payment-key",
+                "amount", reservation.getOrder().getAmount()
         );
 
         RestAssured.given()
                 .contentType(ContentType.JSON)
-                .body(reservation)
-                .when().post("/reservations")
-                .then().statusCode(201);
+                .body(confirmRequest)
+                .when().post("/orders/{orderId}/confirm", reservation.getOrder().getOrderId())
+                .then().statusCode(204);
     }
 
     protected void createReservationWaiting(String name, LocalDate date, long timeId, long themeId) {

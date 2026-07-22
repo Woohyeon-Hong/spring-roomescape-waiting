@@ -23,7 +23,6 @@ CREATE TABLE orders (
     id                 BIGINT           NOT NULL AUTO_INCREMENT,
     order_id           VARCHAR(255)     NOT NULL UNIQUE,
     amount             VARCHAR(255)     NOT NULL,
-    is_confirmed       BOOLEAN          NOT NULL DEFAULT FALSE,
     payment_key        VARCHAR(255),
     PRIMARY KEY (id)
 );
@@ -35,7 +34,7 @@ CREATE TABLE reservation (
     status             VARCHAR(255)    NOT NULL DEFAULT 'PENDING',
     time_id BIGINT                     NOT NULL,
     theme_id BIGINT                    NOT NULL,
-    order_id BIGINT                    NOT NULL,
+    order_id BIGINT                    NOT NULL UNIQUE,
     PRIMARY KEY (id),
     FOREIGN KEY (time_id) REFERENCES reservation_time (id),
     FOREIGN KEY (theme_id) REFERENCES theme (id),

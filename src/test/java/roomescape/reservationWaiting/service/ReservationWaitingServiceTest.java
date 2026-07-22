@@ -21,13 +21,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import roomescape.auth.exception.AuthorizationException;
+import roomescape.global.ExpiryValidator;
 import roomescape.order.domain.Order;
 import roomescape.order.repository.OrderRepository;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.domain.ReservationStatus;
 import roomescape.reservation.exception.InvalidReservationDateValueException;
 import roomescape.reservation.repository.ReservationRepository;
-import roomescape.reservation.service.ExpiryValidator;
 import roomescape.reservationWaiting.domain.ReservationWaiting;
 import roomescape.reservationWaiting.exception.AlreadyReservedSameSlotException;
 import roomescape.reservationWaiting.exception.DuplicateReservationWaitingException;
@@ -69,7 +69,7 @@ class ReservationWaitingServiceTest {
 
     @DisplayName("새로운 에약 대기를 신청한다.")
     @Test
-    void makeReservationWaitingTest() {
+    void makeReservationWaitingTest_success() {
         //given
         when(reservationWaitingRepository.existByDateAndTimeIdAndThemeIdAndName(any(), any(), any(), anyString()))
                 .thenReturn(false);
@@ -102,9 +102,9 @@ class ReservationWaitingServiceTest {
         assertThat(reservationWaiting.getId()).isNotNull();
     }
 
-    @DisplayName("예약 대기 생성 시, 기존에 이미 동일한 예약 대기가 있으면 예외가 발생한다.")
+    @DisplayName("예약 대기 생성 시, 기존에 이미 사용자가 동일한 슬롯으로 예약 대기 걸었으면 예외가 발생한다.")
     @Test
-    void makeReservationWaitingTest_duplicate() {
+    void makeReservationWaitingTest_duplicate_slot() {
         //given
         when(reservationWaitingRepository.existByDateAndTimeIdAndThemeIdAndName(any(), any(), any(), anyString()))
                 .thenReturn(true);
@@ -133,6 +133,28 @@ class ReservationWaitingServiceTest {
                         "brown", LocalDate.of(2026, 5, 15), 1L, 1L
                 )
         )).isInstanceOf(TimeNotFoundException.class);
+    }
+
+    @DisplayName("예약 대기 생성 시, 주어진 날짜가 오늘까지이면 예외가 발생한다.")
+    @Test
+    void makeReservationWaitingTest_expired() {
+        //given
+        when(reservationWaitingRepository.existByDateAndTimeIdAndThemeIdAndName(any(), any(), any(), anyString()))
+                .thenReturn(false);
+
+        when(reservationTimeRepository.findById(any()))
+                .thenReturn(Optional.of(new ReservationTime(1L, LocalTime.of(10, 0))));
+
+        doThrow(InvalidReservationDateValueException.class)
+                .when(expiryValidator)
+                .validateFromNextDay(LocalDate.of(2026, 5, 15));
+
+        //when & then
+        assertThatThrownBy(() -> reservationWaitingService.makeReservationWaiting(
+                new ReservationWaitingCommand(
+                        "brown", LocalDate.of(2026, 5, 15), 1L, 1L
+                )
+        )).isInstanceOf(InvalidReservationDateValueException.class);
     }
 
     @DisplayName("예약 대기 생성 시, themeId에 해당하는 테마가 없으면 예외가 발생한다.")
@@ -210,73 +232,6 @@ class ReservationWaitingServiceTest {
         )).isInstanceOf(AlreadyReservedSameSlotException.class);
     }
 
-    @Test
-    @DisplayName("아이디를 기반으로 예약 대기를 삭제한다.")
-    void deleteReservationWaitingByIdTest_success() {
-        // given
-        ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
-
-        when(reservationWaitingRepository.findById(any())).thenReturn(
-                Optional.of(new ReservationWaiting(
-                        1L, "brown", LocalDate.of(2026, 5, 1), time, theme
-                )));
-        when(reservationWaitingRepository.deleteById(any())).thenReturn(1);
-
-        // when & then
-        assertThatCode(() -> reservationWaitingService.deleteReservationWaitingById(1L, "brown"))
-                .doesNotThrowAnyException();
-    }
-
-    @Test
-    @DisplayName("예약 대기 삭제 시, 대기가 없는 경우 예외가 발생한다.")
-    void deleteReservationWaitingByIdTest_no_waiting() {
-        // given
-        when(reservationWaitingRepository.findById(any())).thenReturn(
-                Optional.empty());
-
-        // when & then
-        assertThatThrownBy(() -> reservationWaitingService.deleteReservationWaitingById(1L, "brown")).isInstanceOf(
-                ReservationWaitingNotFoundException.class);
-    }
-
-    @Test
-    @DisplayName("예약 대기 삭제 시, 대기 날짜가 유효하지 않으면 예외가 발생한다.")
-    void deleteReservationWaitingByIdTest_invalid_date() {
-        // given
-        ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
-        when(reservationWaitingRepository.findById(any())).thenReturn(
-                Optional.of(new ReservationWaiting(
-                        1L, "brown", LocalDate.of(2026, 5, 1), time, theme
-                )));
-
-        doThrow(InvalidReservationDateValueException.class)
-                .when(expiryValidator)
-                .validate(any(), any());
-
-        // when & then
-        assertThatThrownBy(() -> reservationWaitingService.deleteReservationWaitingById(1L, "brown")).isInstanceOf(
-                InvalidReservationDateValueException.class);
-    }
-
-    @Test
-    @DisplayName("예약 대기 삭제 시, 인가에 실패하면 예외가 발생한다.")
-    void deleteReservationWaitingByIdTest_unauthorized() {
-        // given
-        ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
-        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
-
-        when(reservationWaitingRepository.findById(any())).thenReturn(
-                Optional.of(new ReservationWaiting(
-                        1L, "brown", LocalDate.of(2026, 5, 1), time, theme
-                )));
-
-        // when & then
-        assertThatThrownBy(() -> reservationWaitingService.deleteReservationWaitingById(1L, "other")).isInstanceOf(
-                AuthorizationException.class);
-    }
-
     @DisplayName("대기열의 첫 번째 대기를 본인이 승격 요청하면, 대기가 삭제되고 예약으로 저장된다.")
     @Test
     void promoteWaitingTest_success() {
@@ -295,7 +250,7 @@ class ReservationWaitingServiceTest {
         when(reservationWaitingRepository.deleteById(1L))
                 .thenReturn(1);
 
-        Order order = new Order(1L, "order-id", 1000L);
+        Order order = new Order(1L, "order-id", 1000L, null);
         when(orderRepository.save(any(Order.class)))
                 .thenReturn(order);
 
@@ -364,4 +319,70 @@ class ReservationWaitingServiceTest {
         assertThatThrownBy(() -> reservationWaitingService.promoteWaiting(2L, "pobi"))
                 .isInstanceOf(ReservationWaitingNotPromotableException.class);
     }
-}
+
+    @Test
+    @DisplayName("id를 기반으로 예약 대기를 삭제한다.")
+    void deleteReservationWaitingByIdTest_success() {
+        // given
+        ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
+
+        when(reservationWaitingRepository.findById(any())).thenReturn(
+                Optional.of(new ReservationWaiting(
+                        1L, "brown", LocalDate.of(2026, 5, 1), time, theme
+                )));
+        when(reservationWaitingRepository.deleteById(any())).thenReturn(1);
+
+        // when & then
+        assertThatCode(() -> reservationWaitingService.deleteReservationWaitingById(1L, "brown"))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("예약 대기 삭제 시, 대기가 없는 경우 예외가 발생한다.")
+    void deleteReservationWaitingByIdTest_no_waiting() {
+        // given
+        when(reservationWaitingRepository.findById(any())).thenReturn(
+                Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> reservationWaitingService.deleteReservationWaitingById(1L, "brown")).isInstanceOf(
+                ReservationWaitingNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("예약 대기 삭제 시, 인가에 실패하면 예외가 발생한다.")
+    void deleteReservationWaitingByIdTest_unauthorized() {
+        // given
+        ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
+
+        when(reservationWaitingRepository.findById(any())).thenReturn(
+                Optional.of(new ReservationWaiting(
+                        1L, "brown", LocalDate.of(2026, 5, 1), time, theme
+                )));
+
+        // when & then
+        assertThatThrownBy(() -> reservationWaitingService.deleteReservationWaitingById(1L, "other")).isInstanceOf(
+                AuthorizationException.class);
+    }
+
+    @Test
+    @DisplayName("예약 대기 삭제 시, 대기 날짜가 유효하지 않으면 예외가 발생한다.")
+    void deleteReservationWaitingByIdTest_invalid_date() {
+        // given
+        ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
+        Theme theme = new Theme(1L, "이름", "설명", "thumbnailUrl", 1000L);
+        when(reservationWaitingRepository.findById(any())).thenReturn(
+                Optional.of(new ReservationWaiting(
+                        1L, "brown", LocalDate.of(2026, 5, 1), time, theme
+                )));
+
+        doThrow(InvalidReservationDateValueException.class)
+                .when(expiryValidator)
+                .validateFromNextDay(any());
+
+        // when & then
+        assertThatThrownBy(() -> reservationWaitingService.deleteReservationWaitingById(1L, "brown")).isInstanceOf(
+                InvalidReservationDateValueException.class);
+    }}

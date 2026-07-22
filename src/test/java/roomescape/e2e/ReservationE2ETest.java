@@ -9,10 +9,11 @@ import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import roomescape.reservation.exception.ReservationNotFoundException;
 
 public class ReservationE2ETest extends E2ETest {
 
-    @DisplayName("클라이언트가 자신의 예약을 생성, 조회, 삭제한다.")
+    @DisplayName("클라이언트가 자신의 예약을 생성, 결제 승인, 조회, 삭제한다.")
     @Test
     void manageMyReservation() {
         //given
@@ -23,17 +24,31 @@ public class ReservationE2ETest extends E2ETest {
                 "name", "brown",
                 "date", "2026-05-05",
                 "timeId", 1,
-                "themeId", 1,
-                "orderId", createOrder(1000L)
+                "themeId", 1
+        );
+
+        Map<String, Object> confirmRequest = Map.of(
+                "paymentKey", "test-payment-key",
+                "amount", 1000L
         );
 
         //when & then
-        RestAssured.given().log().all()
+        long id = RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(reservation)
                 .when().post("/reservations")
                 .then().log().all()
-                .statusCode(201);
+                .statusCode(201)
+                .extract().jsonPath().getLong("id");
+
+        String orderId = reservationRepository.findByIdForUpdate(id)
+                .orElseThrow(ReservationNotFoundException::new).getOrder().getOrderId();
+
+        RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body(confirmRequest)
+                .when().post("/orders/{orderId}/confirm", orderId)
+                .then().statusCode(204);
 
         RestAssured.given().log().all()
                 .queryParam("name", "brown")
@@ -66,7 +81,8 @@ public class ReservationE2ETest extends E2ETest {
 
         createTheme("테마", "설명", "url", 1000L);
 
-        createReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
+        String orderId = createReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
+        confirm(orderId);
 
         //when & then
         Map<String, Object> requestDateUpdateBody = new HashMap<>();
@@ -117,8 +133,7 @@ public class ReservationE2ETest extends E2ETest {
                 "name", "brown",
                 "date", "2026-05-05",
                 "timeId", 1,
-                "themeId", 1,
-                "orderId", createOrder(1000L)
+                "themeId", 1
         );
 
         RestAssured.given().log().all()
@@ -155,7 +170,9 @@ public class ReservationE2ETest extends E2ETest {
         createReservationTime("10:00");
         createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/image.png", 1000L);
 
-        createReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
+        String orderId = createReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
+        confirm(orderId);
+
         createReservationWaiting("pobi", LocalDate.of(2026, 5, 5), 1L, 1L);
         createReservationWaiting("gump", LocalDate.of(2026, 5, 5), 1L, 1L);
 

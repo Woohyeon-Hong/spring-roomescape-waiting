@@ -6,12 +6,12 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import roomescape.auth.exception.AuthorizationException;
+import roomescape.global.ExpiryValidator;
 import roomescape.order.domain.Order;
 import roomescape.order.repository.OrderRepository;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.exception.DuplicateReservationException;
 import roomescape.reservation.repository.ReservationRepository;
-import roomescape.reservation.service.ExpiryValidator;
 import roomescape.reservationWaiting.domain.ReservationWaiting;
 import roomescape.reservationWaiting.exception.AlreadyReservedSameSlotException;
 import roomescape.reservationWaiting.exception.DuplicateReservationWaitingException;
@@ -49,7 +49,7 @@ public class ReservationWaitingService {
         ReservationTime time = reservationTimeRepository.findById(command.timeId())
                 .orElseThrow(TimeNotFoundException::new);
 
-        expiryValidator.validate(command.date(), time.getStartAt());
+        expiryValidator.validateFromNextDay(command.date());
 
         Theme theme = themeRepository.findById(command.themeId())
                 .orElseThrow(ThemeNotFoundException::new);
@@ -76,28 +76,6 @@ public class ReservationWaitingService {
         }
     }
 
-
-    public void deleteReservationWaitingById(Long id, String name) {
-        ReservationWaiting reservationWaiting = reservationWaitingRepository.findById(id)
-                .orElseThrow(ReservationWaitingNotFoundException::new);
-
-        if (!reservationWaiting.hasSameName(name)) {
-            throw new AuthorizationException();
-        }
-
-        expiryValidator.validate(
-                reservationWaiting.getDate(),
-                reservationWaiting.getTime().getStartAt()
-        );
-
-        int affectedRow = reservationWaitingRepository.deleteById(id);
-        int nonAffected = 0;
-
-        if (affectedRow == nonAffected) {
-            throw new ReservationWaitingNotFoundException();
-        }
-    }
-
     public List<ReservationWaiting> findPromotableWaitingsByName(String name) {
         return reservationWaitingRepository.findPromotableByName(name);
     }
@@ -115,7 +93,7 @@ public class ReservationWaitingService {
                 waiting.getDate(), waiting.getTime().getId(), waiting.getTheme().getId()
         ).orElseThrow(ReservationWaitingNotFoundException::new);
 
-        if (!first.getId().equals(waiting.getId())) {
+        if (!waiting.equals(first)) {
             throw new ReservationWaitingNotPromotableException();
         }
 
@@ -134,6 +112,24 @@ public class ReservationWaitingService {
             );
         } catch (DuplicateKeyException e) {
             throw new DuplicateReservationException();
+        }
+    }
+
+    public void deleteReservationWaitingById(Long id, String name) {
+        ReservationWaiting reservationWaiting = reservationWaitingRepository.findById(id)
+                .orElseThrow(ReservationWaitingNotFoundException::new);
+
+        if (!reservationWaiting.hasSameName(name)) {
+            throw new AuthorizationException();
+        }
+
+        expiryValidator.validateFromNextDay(reservationWaiting.getDate());
+
+        int affectedRow = reservationWaitingRepository.deleteById(id);
+        int nonAffected = 0;
+
+        if (affectedRow == nonAffected) {
+            throw new ReservationWaitingNotFoundException();
         }
     }
 }

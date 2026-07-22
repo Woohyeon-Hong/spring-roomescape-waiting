@@ -8,10 +8,12 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import roomescape.auth.exception.AuthorizationException;
+import roomescape.global.ExpiryValidator;
 import roomescape.order.domain.Order;
 import roomescape.order.repository.OrderRepository;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.exception.DuplicateReservationException;
+import roomescape.reservation.exception.InvalidReservationPeriodException;
 import roomescape.reservation.exception.ReservationNotFoundException;
 import roomescape.reservation.exception.ReservationSlotHasWaitingException;
 import roomescape.reservation.repository.ReservationRepository;
@@ -46,10 +48,14 @@ public class ReservationService {
             throw new DuplicateReservationException();
         }
 
-        validateDoNotHaveWaiting(command.date(), command.timeId(), command.themeId());
+        validateDoNotHaveWaiting(
+                command.date(),
+                command.timeId(),
+                command.themeId()
+        );
 
         ReservationTime time = getReservationTime(command.timeId());
-        expiryValidator.validate(command.date(), time.getStartAt());
+        expiryValidator.validateFromNextDay(command.date());
 
         Theme theme = themeRepository.findById(command.themeId())
                 .orElseThrow(ThemeNotFoundException::new);
@@ -85,6 +91,10 @@ public class ReservationService {
     }
 
     public List<PopularThemeResult> findPopularThemes(int period, int limit) {
+        if (period <= 0 || limit <= 0) {
+            throw new InvalidReservationPeriodException();
+        }
+
         int oneDayDifference = 1;
 
         LocalDate to = LocalDate.now(clock).minusDays(oneDayDifference);
@@ -98,17 +108,11 @@ public class ReservationService {
         Reservation original = getReservation(id);
 
         validateReservationOwnership(original, name);
-        expiryValidator.validate(
-                original.getDate(),
-                original.getReservationTime().getStartAt()
-        );
+        expiryValidator.validateFromNextDay(original.getDate());
 
         Reservation updated = updateField(command, original);
 
-        expiryValidator.validate(
-                updated.getDate(),
-                updated.getReservationTime().getStartAt()
-        );
+        expiryValidator.validateFromNextDay(updated.getDate());
         if (original.getDate().equals(updated.getDate())
                 && original.getReservationTime().equals(updated.getReservationTime())) {
             return;
@@ -168,10 +172,7 @@ public class ReservationService {
         Reservation reservation = getReservation(id);
 
         validateReservationOwnership(reservation, name);
-        expiryValidator.validate(
-                reservation.getDate(),
-                reservation.getReservationTime().getStartAt()
-        );
+        expiryValidator.validateFromNextDay(reservation.getDate());
 
         deleteReservation(reservation);
     }

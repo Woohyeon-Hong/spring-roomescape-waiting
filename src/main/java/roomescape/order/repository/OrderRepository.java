@@ -11,7 +11,7 @@ public interface OrderRepository {
 
     Optional<Order> findByOrderId(String orderId);
 
-    void confirmByOrderId(String orderId, String paymentKey);
+    void update(Order order);
 
     int deleteByOrderId(String orderId);
 }

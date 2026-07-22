@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -23,12 +24,13 @@ class ThemeServiceTest {
     @Mock
     ThemeRepository themeRepository;
 
+    @InjectMocks
+    ThemeService themeService;
+
     @DisplayName("테마 생성 시, 기존에 이미 동일한 이름의 테마가 있으면 예외가 발생한다.")
     @Test
-    void registerTheme_duplicate() {
+    void registerTheme_duplicate_name() {
         //given
-        ThemeService themeService = new ThemeService(themeRepository);
-
         when(themeRepository.existByName("brown"))
                 .thenReturn(true);
 
@@ -42,8 +44,6 @@ class ThemeServiceTest {
     @Test
     void removeThemeById_not_found() {
         //given
-        ThemeService themeService = new ThemeService(themeRepository);
-
         when(themeRepository.findById(1L))
                 .thenReturn(Optional.empty());
 
@@ -56,8 +56,6 @@ class ThemeServiceTest {
     @Test
     void removeThemeById_in_use() {
         //given
-        ThemeService themeService = new ThemeService(themeRepository);
-
         when(themeRepository.findById(1L))
                 .thenReturn(Optional.of(new Theme(1L, "테마", "설명", "url", 1000L)));
 
