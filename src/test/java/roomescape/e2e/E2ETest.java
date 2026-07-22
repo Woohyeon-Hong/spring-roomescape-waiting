@@ -19,7 +19,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import roomescape.e2e.E2ETest.WebConfig;
-import roomescape.order.repository.OrderRepository;
 import roomescape.payment.PaymentGateway;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.exception.ReservationNotFoundException;
@@ -36,9 +35,6 @@ public abstract class E2ETest {
 
     @Autowired
     MutableClock clock;
-
-    @Autowired
-    OrderRepository orderRepository;
 
     @Autowired
     ReservationRepository reservationRepository;
@@ -114,8 +110,12 @@ public abstract class E2ETest {
         RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body(confirmRequest)
-                .when().post("/orders/{orderId}/confirm", reservation.getOrder().getOrderId())
+                .when().post("/orders/{orderId}/confirm", orderId)
                 .then().statusCode(204);
+    }
+
+    protected void createConfirmedReservation(String name, LocalDate date, Long timeId, Long themeId) {
+        confirm(createReservation(name, date, timeId, themeId));
     }
 
     protected void createReservationWaiting(String name, LocalDate date, long timeId, long themeId) {

@@ -55,7 +55,10 @@ public class ReservationE2ETest extends E2ETest {
                 .when().get("/reservations")
                 .then().log().all()
                 .statusCode(200)
-                .body("size()", is(1));
+                .body("size()", is(1))
+                .body("[0].name", is("brown"))
+                .body("[0].date", is("2026-05-05"))
+                .body("[0].status", is("reserved"));
 
         RestAssured.given().log().all()
                 .header("Authorization", "brown")
@@ -81,8 +84,7 @@ public class ReservationE2ETest extends E2ETest {
 
         createTheme("테마", "설명", "url", 1000L);
 
-        String orderId = createReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
-        confirm(orderId);
+        createConfirmedReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
 
         //when & then
         Map<String, Object> requestDateUpdateBody = new HashMap<>();
@@ -129,26 +131,16 @@ public class ReservationE2ETest extends E2ETest {
         createReservationTime("10:00");
         createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/image.png", 1000L);
 
-        Map<String, Object> reservation = Map.of(
-                "name", "brown",
-                "date", "2026-05-05",
-                "timeId", 1,
-                "themeId", 1
-        );
-
-        RestAssured.given().log().all()
-                .contentType(ContentType.JSON)
-                .body(reservation)
-                .when().post("/reservations")
-                .then().log().all()
-                .statusCode(201);
+        createConfirmedReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
 
         //when & then
         RestAssured.given().log().all()
                 .when().get("/admin/reservations")
                 .then().log().all()
                 .statusCode(200)
-                .body("size()", is(1));
+                .body("size()", is(1))
+                .body("[0].name", is("brown"))
+                .body("[0].date", is("2026-05-05"));
 
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
@@ -170,8 +162,7 @@ public class ReservationE2ETest extends E2ETest {
         createReservationTime("10:00");
         createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/image.png", 1000L);
 
-        String orderId = createReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
-        confirm(orderId);
+        createConfirmedReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
 
         createReservationWaiting("pobi", LocalDate.of(2026, 5, 5), 1L, 1L);
         createReservationWaiting("gump", LocalDate.of(2026, 5, 5), 1L, 1L);

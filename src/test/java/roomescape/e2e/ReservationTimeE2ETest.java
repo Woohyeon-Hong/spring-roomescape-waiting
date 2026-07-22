@@ -16,36 +16,32 @@ import roomescape.time.domain.ReservationTime;
 
 public class ReservationTimeE2ETest extends E2ETest {
 
-    @DisplayName("테마를 생성, 조회, 삭제한다.")
+    @DisplayName("예약 시간을 생성, 조회, 삭제한다.")
     @Test
-    void manageTheme() {
-        Map<String, Object> requestBody = Map.of(
-                "name", "테마",
-                "description", "설명",
-                "thumbnailUrl", "url",
-                "amount", 1000L
-        );
+    void manageReservationTime() {
+        Map<String, String> requestBody = Map.of("startAt", "10:00");
 
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(requestBody)
-                .when().post("/admin/themes")
+                .when().post("/admin/times")
                 .then().log().all()
                 .statusCode(201);
 
         RestAssured.given().log().all()
-                .when().get("/themes")
+                .when().get("/times")
                 .then().log().all()
                 .statusCode(200)
-                .body("size()", is(1));
+                .body("size()", is(1))
+                .body("[0].startAt", is("10:00:00"));
 
         RestAssured.given().log().all()
-                .when().delete("/admin/themes/1")
+                .when().delete("/admin/times/1")
                 .then().log().all()
                 .statusCode(204);
 
         RestAssured.given().log().all()
-                .when().get("/themes")
+                .when().get("/times")
                 .then().log().all()
                 .statusCode(200)
                 .body("size()", is(0));
@@ -77,11 +73,8 @@ public class ReservationTimeE2ETest extends E2ETest {
                         )
         );
 
-        String orderId1 = createReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
-        confirm(orderId1);
-
-        String orderId2 = createReservation("pobi", LocalDate.of(2026, 5, 6), 2L, 2L);
-        confirm(orderId2);
+        createConfirmedReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
+        createConfirmedReservation("pobi", LocalDate.of(2026, 5, 6), 2L, 2L);
 
         assertAll(
                 () -> assertThat(getAvailableTimes(LocalDate.of(2026, 5, 5), 1L)).hasSize(3),

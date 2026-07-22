@@ -8,7 +8,7 @@ import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-class ReservationWaitingE2ETest extends E2ETest {
+public class ReservationWaitingE2ETest extends E2ETest {
 
     @DisplayName("예약 대기 신청에 성공하면 201을 반환한다.")
     @Test
@@ -17,8 +17,7 @@ class ReservationWaitingE2ETest extends E2ETest {
         createReservationTime("10:00");
         createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/image.png", 1000L);
 
-        String orderId = createReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
-        confirm(orderId);
+        createConfirmedReservation("brown", LocalDate.of(2026, 5, 5), 1L, 1L);
 
         Map<String, Object> body = new HashMap<>();
         body.put("name", "pobi");
@@ -41,8 +40,7 @@ class ReservationWaitingE2ETest extends E2ETest {
         createReservationTime("10:00");
         createTheme("우아한 테마", "우아한테크코스 전용 테마입니다.", "https://example.com/image.png", 1000L);
 
-        String orderId = createReservation("brown", LocalDate.of(2026, 5, 30), 1L, 1L);
-        confirm(orderId);
+        createConfirmedReservation("brown", LocalDate.of(2026, 5, 30), 1L, 1L);
 
         createReservationWaiting("gump", LocalDate.of(2026, 5, 30), 1L, 1L);
 

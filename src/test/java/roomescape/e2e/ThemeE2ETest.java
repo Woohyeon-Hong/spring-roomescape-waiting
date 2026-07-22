@@ -15,36 +15,44 @@ import org.junit.jupiter.api.Test;
 
 public class ThemeE2ETest extends E2ETest {
 
-    @DisplayName("예약 시간을 생성, 조회, 삭제한다.")
+    @DisplayName("테마를 생성, 조회, 삭제한다.")
     @Test
-    void manageReservationTime() {
-        Map<String, String> requestBody = Map.of("startAt", "10:00");
+    void manageTheme() {
+        Map<String, Object> requestBody = Map.of(
+                "name", "테마",
+                "description", "설명",
+                "thumbnailUrl", "url",
+                "amount", 1000L
+        );
 
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(requestBody)
-                .when().post("/admin/times")
+                .when().post("/admin/themes")
                 .then().log().all()
                 .statusCode(201);
 
         RestAssured.given().log().all()
-                .when().get("/times")
+                .when().get("/themes")
                 .then().log().all()
                 .statusCode(200)
-                .body("size()", is(1));
+                .body("size()", is(1))
+                .body("[0].name", is("테마"))
+                .body("[0].description", is("설명"))
+                .body("[0].thumbnailUrl", is("url"))
+                .body("[0].amount", is(1000));
 
         RestAssured.given().log().all()
-                .when().delete("/admin/times/1")
+                .when().delete("/admin/themes/1")
                 .then().log().all()
                 .statusCode(204);
 
         RestAssured.given().log().all()
-                .when().get("/times")
+                .when().get("/themes")
                 .then().log().all()
                 .statusCode(200)
                 .body("size()", is(0));
     }
-
 
     @DisplayName("5월 1일 기준, 직전 period 일 동안의 예약 수를 기준으로 상위 limit 개의 테마들을 조회한다.")
     @Test
@@ -58,23 +66,12 @@ public class ThemeE2ETest extends E2ETest {
         createTheme("페어 테마", "페어 전용 테마입니다.", "https://example.com/pair.png", 1000L);
         createTheme("당근 테마", "당근 전용 테마입니다.", "https://example.com/carrot.png", 1000L);
 
-        String orderId1 = createReservation("brown", LocalDate.of(2026, 4, 29), 1L, 1L);
-        confirm(orderId1);
-
-        String orderId2 = createReservation("pobi", LocalDate.of(2026, 4, 30), 1L, 1L);
-        confirm(orderId2);
-
-        String orderId3 = createReservation("eden", LocalDate.of(2026, 4, 30), 1L, 2L);
-        confirm(orderId3);
-
-        String orderId4 = createReservation("boundaryReservation", LocalDate.of(2026, 4, 24), 1L, 2L);
-        confirm(orderId4);
-
-        String orderId5 = createReservation("todayReservation", LocalDate.of(2026, 5, 1), 1L, 3L);
-        confirm(orderId5);
-
-        String orderId6 = createReservation("outOfRangeReservation", LocalDate.of(2026, 4, 23), 1L, 3L);
-        confirm(orderId6);
+        createConfirmedReservation("brown", LocalDate.of(2026, 4, 29), 1L, 1L);
+        createConfirmedReservation("pobi", LocalDate.of(2026, 4, 30), 1L, 1L);
+        createConfirmedReservation("eden", LocalDate.of(2026, 4, 30), 1L, 2L);
+        createConfirmedReservation("boundaryReservation", LocalDate.of(2026, 4, 24), 1L, 2L);
+        createConfirmedReservation("todayReservation", LocalDate.of(2026, 5, 1), 1L, 3L);
+        createConfirmedReservation("outOfRangeReservation", LocalDate.of(2026, 4, 23), 1L, 3L);
 
         clock.setInstant(Instant.parse("2026-05-01T09:00:00+09:00"));
 
