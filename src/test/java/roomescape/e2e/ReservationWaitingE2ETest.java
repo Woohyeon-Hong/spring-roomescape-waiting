@@ -75,7 +75,7 @@ public class ReservationWaitingE2ETest extends E2ETest {
         RestAssured.given()
                 .header("Authorization", "pobi")
                 .when().post("/reservation-waitings/{id}/promote", 1)
-                .then().statusCode(204);
+                .then().statusCode(201);
 
         //then
         Reservation promoted = reservationRepository

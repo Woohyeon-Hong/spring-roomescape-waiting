@@ -81,7 +81,7 @@ public class ReservationWaitingService {
     }
 
     @Transactional
-    public void promoteWaiting(Long waitingId, String name) {
+    public Order promoteWaiting(Long waitingId, String name) {
         ReservationWaiting waiting = reservationWaitingRepository.findById(waitingId)
                 .orElseThrow(ReservationWaitingNotFoundException::new);
 
@@ -113,6 +113,8 @@ public class ReservationWaitingService {
         } catch (DuplicateKeyException e) {
             throw new DuplicateReservationException();
         }
+
+        return order;
     }
 
     public void deleteReservationWaitingById(Long id, String name) {

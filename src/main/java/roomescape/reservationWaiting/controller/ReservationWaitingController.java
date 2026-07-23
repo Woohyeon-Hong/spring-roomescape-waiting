@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import roomescape.auth.annotation.Authenticated;
 import roomescape.auth.annotation.LoginName;
+import roomescape.order.controller.dto.OrderResponse;
+import roomescape.order.domain.Order;
 import roomescape.reservationWaiting.controller.dto.ReservationWaitingRequest;
 import roomescape.reservationWaiting.controller.dto.ReservationWaitingResponse;
 import roomescape.reservationWaiting.domain.ReservationWaiting;
@@ -58,8 +60,10 @@ public class ReservationWaitingController {
 
     @Authenticated
     @PostMapping("/{id}/promote")
-    public ResponseEntity<Void> promoteMyReservationWaiting(@LoginName String name, @PathVariable Long id) {
-        reservationWaitingService.promoteWaiting(id, name);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<OrderResponse> promoteMyReservationWaiting(@LoginName String name, @PathVariable Long id) {
+        Order order = reservationWaitingService.promoteWaiting(id, name);
+
+        return ResponseEntity.created(URI.create("/orders/" + order.getOrderId()))
+                .body(OrderResponse.from(order));
     }
 }

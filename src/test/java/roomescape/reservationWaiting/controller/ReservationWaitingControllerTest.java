@@ -17,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import roomescape.order.domain.Order;
 import roomescape.reservationWaiting.domain.ReservationWaiting;
 import roomescape.reservationWaiting.service.ReservationWaitingService;
 import roomescape.theme.domain.Theme;
@@ -219,14 +220,19 @@ class ReservationWaitingControllerTest {
         ).andExpect(status().isUnauthorized());
     }
 
-    @DisplayName("예약 대기를 승격 요청하면 204를 반환한다.")
+    @DisplayName("예약 대기를 승격 요청하면 201를 반환한다.")
     @Test
     void promoteMyReservationWaiting_success() throws Exception {
+        //given
+        when(reservationWaitingService.promoteWaiting(1L, "brown"))
+                .thenReturn(new Order(1L, "order-id", 1000L, "payment-key"));
+
+        //when & then
         mockMvc.perform(
                 post("/reservation-waitings/{id}/promote", 1)
                         .header(HttpHeaders.AUTHORIZATION, "brown")
                         .contentType(MediaType.APPLICATION_JSON)
-        ).andExpect(status().isNoContent());
+        ).andExpect(status().isCreated());
 
         verify(reservationWaitingService).promoteWaiting(1L, "brown");
     }
