@@ -19,6 +19,7 @@ import roomescape.global.exception.response.ErrorResponse;
 import roomescape.payment.exception.PaymentAlreadyProcessedException;
 import roomescape.payment.exception.PaymentBadRequestException;
 import roomescape.payment.exception.PaymentNotFoundException;
+import roomescape.payment.exception.PaymentReadTimeoutException;
 import roomescape.payment.exception.PaymentRejectedException;
 import roomescape.payment.exception.PaymentServerErrorException;
 import roomescape.payment.exception.PaymentTimeoutException;
@@ -146,5 +147,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PaymentTimeoutException.class)
     public ResponseEntity<ErrorResponse> handlePaymentTimeoutException(PaymentTimeoutException e) {
         return makeResponse(e, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    // read timeout은 승인 성공 여부를 알 수 없는 상태이므로, 확실한 실패(500)와 구분되는
+    // 504로 응답해 클라이언트가 "확인 필요"로 다르게 처리하도록 한다.
+    @ExceptionHandler(PaymentReadTimeoutException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentReadTimeoutException(PaymentReadTimeoutException e) {
+        return makeResponse(e, HttpStatus.GATEWAY_TIMEOUT);
     }
 }

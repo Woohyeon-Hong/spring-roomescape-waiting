@@ -25,7 +25,16 @@ async function api(path, options = {}) {
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || "요청 처리에 실패했습니다.");
+    let message = text || "요청 처리에 실패했습니다.";
+    try {
+      message = JSON.parse(text).message ?? message;
+    } catch (parseError) {
+      // 본문이 JSON이 아니면 원문 텍스트를 그대로 메시지로 사용한다.
+    }
+
+    const error = new Error(message);
+    error.status = response.status;
+    throw error;
   }
 
   if (response.status === 204) return null;

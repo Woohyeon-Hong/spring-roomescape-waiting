@@ -1,5 +1,9 @@
 package roomescape.payment.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -12,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import roomescape.payment.exception.PaymentReadTimeoutException;
 import roomescape.payment.service.PaymentService;
 
 @WebMvcTest(PaymentController.class)
@@ -49,5 +54,25 @@ class PaymentControllerTest {
                 delete("/orders/{orderId}/fail", "order-id")
                         .contentType(MediaType.APPLICATION_JSON)
         ).andExpect(status().isNoContent());
+    }
+
+    @DisplayName("승인 응답 지연(read timeout) 시 승인 여부가 불확실하므로 504를 반환한다.")
+    @Test
+    void confirmTest_readTimeout_returns504() throws Exception {
+        String body = """
+                {
+                    "paymentKey": "payment-key",
+                    "amount": 1000
+                }
+                """;
+
+        doThrow(new PaymentReadTimeoutException())
+                .when(paymentService).confirm(anyString(), any(), anyLong());
+
+        mockMvc.perform(
+                post("/orders/{orderId}/confirm", "order-id")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+        ).andExpect(status().isGatewayTimeout());
     }
 }
