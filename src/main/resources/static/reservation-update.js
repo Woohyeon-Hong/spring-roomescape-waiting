@@ -1,5 +1,3 @@
-const $ = (selector) => document.querySelector(selector);
-
 const query = new URLSearchParams(window.location.search);
 const reservationId = query.get("id");
 const themeId = query.get("themeId");
@@ -7,27 +5,6 @@ let selectedTimeId = null;
 
 function setMessage(message) {
   $("#message").textContent = message;
-}
-
-async function api(path, options = {}) {
-  const { headers = {}, ...restOptions } = options;
-  const mergedHeaders = {
-    "Content-Type": "application/json",
-    ...headers
-  };
-
-  const response = await fetch(path, {
-    headers: mergedHeaders,
-    ...restOptions
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || "요청 처리에 실패했습니다.");
-  }
-
-  if (response.status === 204) return null;
-  return response.json();
 }
 
 function renderAvailableTimes(times) {
@@ -45,7 +22,7 @@ function renderAvailableTimes(times) {
     button.className = "chip";
     button.type = "button";
     button.dataset.timeId = time.id;
-    button.textContent = time.startAt;
+    button.textContent = formatTime(time.startAt);
     if (selectedTimeId === time.id) {
       button.classList.add("chip-selected");
     }
@@ -66,6 +43,9 @@ async function loadAvailableTimes() {
 }
 
 function initPage() {
+  $("#authName").value = getSavedName();
+  $("#updateDate").min = tomorrowIso();
+
   if (!reservationId || !themeId) {
     $("#submitUpdate").disabled = true;
     $("#loadTimes").disabled = true;
@@ -116,6 +96,7 @@ $("#submitUpdate").addEventListener("click", async () => {
   }
 
   try {
+    saveName(authName);
     await api(`/reservations/${reservationId}`, {
       method: "PATCH",
       headers: { Authorization: authName },
@@ -124,9 +105,9 @@ $("#submitUpdate").addEventListener("click", async () => {
         timeId: selectedTimeId
       })
     });
-    setMessage("예약 변경이 완료되었습니다. 잠시 후 사용자 페이지로 이동합니다.");
+    setMessage("예약 변경이 완료되었습니다. 잠시 후 내 예약 페이지로 이동합니다.");
     setTimeout(() => {
-      window.location.href = "/index.html";
+      window.location.href = "/reservations.html";
     }, 1200);
   } catch (error) {
     setMessage(error.message);

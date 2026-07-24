@@ -207,7 +207,10 @@ class ReservationControllerTest {
                         LocalDate.of(2026, 6, 1),
                         new ReservationTime(1L, LocalTime.of(10, 0)),
                         new Theme(1L, "테마", "설명", "url", 1000L),
-                        "reserved",
+                        "CONFIRMED",
+                        "order-id",
+                        1000L,
+                        "payment-key",
                         0L
                 )));
 

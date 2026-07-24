@@ -8,8 +8,6 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import roomescape.order.repository.OrderRepository;
-import roomescape.order.service.OrderService;
 import roomescape.reservation.exception.DuplicateReservationException;
 import roomescape.reservation.exception.ReservationNotFoundException;
 import roomescape.reservation.service.dto.ReservationCommand;
@@ -34,12 +32,6 @@ public class ReservationServiceIntegrationTest extends ServiceIntegrationTest {
 
     @Autowired
     ThemeService themeService;
-
-    @Autowired
-    OrderService orderService;
-
-    @Autowired
-    OrderRepository orderRepository;
 
     @DisplayName("동일한 예약 요청이 동시에 들어오면 하나만 성공하고 나머지는 중복 예외가 발생한다")
     @Test

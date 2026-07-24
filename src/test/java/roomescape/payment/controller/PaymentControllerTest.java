@@ -1,6 +1,7 @@
 package roomescape.payment.controller;
 
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -24,7 +25,7 @@ class PaymentControllerTest {
 
     @DisplayName("orderId, paymentKey, amount를 받아 결제를 승인하고 204를 반환한다.")
     @Test
-    void confirm_success() throws Exception {
+    void confirmTest_success() throws Exception {
         String body = """
                 {
                     "paymentKey": "payment-key",
@@ -39,5 +40,14 @@ class PaymentControllerTest {
         ).andExpect(status().isNoContent());
 
         verify(paymentService).confirm("order-id", "payment-key", 1000L);
+    }
+
+    @DisplayName("orderId를 받아, 주문과 예약을 삭제하고 204를 반환한다.")
+    @Test
+    void failTest_success() throws Exception {
+        mockMvc.perform(
+                delete("/orders/{orderId}/fail", "order-id")
+                        .contentType(MediaType.APPLICATION_JSON)
+        ).andExpect(status().isNoContent());
     }
 }

@@ -170,9 +170,11 @@ class JdbcReservationRepositoryTest extends RepositoryTest {
         ReservationTime time = createTime(LocalTime.of(10, 0));
         Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
 
-        Reservation reservation1 = saveReservation("brown", LocalDate.of(2024, 5, 1), time, theme, createOrder(1000L));
+        Order order1 = createOrder(1000L);
+        Order order2 = createOrder(1000L);
+        Reservation reservation1 = saveReservation("brown", LocalDate.of(2024, 5, 1), time, theme, order1);
         saveReservation("poppy", LocalDate.of(2024, 5, 2), time, theme, createOrder(1000L));
-        Reservation reservation2 = saveReservation("brown", LocalDate.of(2024, 5, 3), time, theme, createOrder(1000L));
+        Reservation reservation2 = saveReservation("brown", LocalDate.of(2024, 5, 3), time, theme, order2);
 
         ReservationWaiting waiting1 = reservationWaitingRepository.save(ReservationWaiting.of(
                 "brown", LocalDate.of(2024, 5, 2), time, theme
@@ -185,9 +187,9 @@ class JdbcReservationRepositoryTest extends RepositoryTest {
         assertAll(
                 () -> assertThat(results).hasSize(3),
                 () -> assertThat(results).containsExactly(
-                        new ReservationWithStatusResult(reservation1.getId(), reservation1.getName(), reservation1.getDate(), reservation1.getReservationTime(), reservation1.getTheme(), "reserved", 0L),
-                        new ReservationWithStatusResult(waiting1.getId(), waiting1.getName(), waiting1.getDate(), waiting1.getTime(), waiting1.getTheme(), "waiting", 1L),
-                        new ReservationWithStatusResult(reservation2.getId(), reservation2.getName(), reservation2.getDate(), reservation2.getReservationTime(), reservation2.getTheme(), "reserved", 0L)
+                        new ReservationWithStatusResult(reservation1.getId(), reservation1.getName(), reservation1.getDate(), reservation1.getReservationTime(), reservation1.getTheme(), "CONFIRMED", order1.getOrderId(), order1.getAmount(), order1.getPaymentKey(), 0L),
+                        new ReservationWithStatusResult(waiting1.getId(), waiting1.getName(), waiting1.getDate(), waiting1.getTime(), waiting1.getTheme(), "waiting", null, null, null, 1L),
+                        new ReservationWithStatusResult(reservation2.getId(), reservation2.getName(), reservation2.getDate(), reservation2.getReservationTime(), reservation2.getTheme(), "CONFIRMED", order2.getOrderId(), order2.getAmount(), order2.getPaymentKey(), 0L)
                 )
         );
     }
@@ -532,5 +534,23 @@ class JdbcReservationRepositoryTest extends RepositoryTest {
                 () -> assertThat(themeCount).isEqualTo(1),
                 () -> assertThat(orderCount).isEqualTo(1)
         );
+    }
+
+    @Test
+    @DisplayName("orderId를 통해 예약을 삭제한다.")
+    void deleteByOrderIdTest() {
+        // given
+        ReservationTime time = createTime(LocalTime.of(10, 0));
+        Theme theme = createTheme("우테코", "우테코 전용 테마", "https://example.com", 1000L);
+        Order order = createOrder(1000L);
+
+        Reservation saved = saveReservation("brown",  LocalDate.of(2024, 5, 1), time, theme, order);
+
+        // when
+        reservationRepository.deleteByOrderId(order.getOrderId());
+
+        // then
+        List<ReservationWithStatusResult> results = reservationRepository.findAllByName("브라");
+        assertThat(results).isEmpty();
     }
 }

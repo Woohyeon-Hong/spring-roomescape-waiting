@@ -12,6 +12,9 @@ public record ReservationWithStatusResponse(
         ReservationTime time,
         Theme theme,
         String status,
+        String orderId,
+        Long amount,
+        String paymentKey,
         Long waitingOrder
 ) {
 
@@ -23,6 +26,9 @@ public record ReservationWithStatusResponse(
                 result.time(),
                 result.theme(),
                 result.status(),
+                result.orderId(),
+                result.amount(),
+                result.paymentKey(),
                 result.waitingOrder()
         );
     }

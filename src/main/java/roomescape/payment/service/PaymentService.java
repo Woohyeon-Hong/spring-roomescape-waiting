@@ -2,6 +2,7 @@ package roomescape.payment.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import roomescape.order.domain.Order;
 import roomescape.order.exception.InvalidPaymentKeyException;
 import roomescape.order.exception.OrderNotFoundException;
@@ -9,12 +10,14 @@ import roomescape.order.exception.PaymentAmountMismatchException;
 import roomescape.order.repository.OrderRepository;
 import roomescape.payment.PaymentConfirmation;
 import roomescape.payment.PaymentGateway;
+import roomescape.reservation.repository.ReservationRepository;
 
 @RequiredArgsConstructor
 @Service
 public class PaymentService {
 
     private final OrderRepository orderRepository;
+    private final ReservationRepository reservationRepository;
     private final PaymentGateway paymentGateway;
     private final PaymentConfirmationApplier paymentConfirmationApplier;
 
@@ -35,5 +38,14 @@ public class PaymentService {
         );
 
         paymentConfirmationApplier.apply(order, paymentKey);
+    }
+
+    @Transactional
+    public void rollback(String orderId) {
+        orderRepository.findByOrderIdForUpdate(orderId)
+                .orElseThrow(OrderNotFoundException::new);
+
+        reservationRepository.deleteByOrderId(orderId);
+        orderRepository.deleteByOrderId(orderId);
     }
 }

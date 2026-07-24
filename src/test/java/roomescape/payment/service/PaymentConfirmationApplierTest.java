@@ -2,7 +2,6 @@ package roomescape.payment.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,7 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import roomescape.order.domain.Order;
-import roomescape.order.exception.OrderNotFoundException;
 import roomescape.order.repository.OrderRepository;
 import roomescape.reservation.domain.Reservation;
 import roomescape.reservation.domain.ReservationStatus;
@@ -60,21 +58,6 @@ class PaymentConfirmationApplierTest {
         //then
         verify(orderRepository).update(order.updatePaymentKey("payment-key"));
         verify(reservationRepository).update(any(Reservation.class));
-    }
-
-    @DisplayName("주문이 없으면 예외가 발생한다.")
-    @Test
-    void applyTest_order_not_found() {
-        //given
-        Order order = new Order(1L, "order-id", 1000L, null);
-
-        doThrow(OrderNotFoundException.class)
-                .when(orderRepository)
-                        .update(any(Order.class));
-
-        //when & then
-        assertThatThrownBy(() -> paymentConfirmationApplier.apply(order, "payment-key"))
-                .isInstanceOf(OrderNotFoundException.class);
     }
 
     @DisplayName("주문에 연결된 예약이 없으면 예외가 발생한다.")

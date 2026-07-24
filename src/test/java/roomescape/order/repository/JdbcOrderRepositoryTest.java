@@ -92,6 +92,20 @@ class JdbcOrderRepositoryTest extends RepositoryTest {
         assertThat(saved).isEqualTo(found);
     }
 
+    @DisplayName("orderId를 통해 저장된 주문을 락을 걸어 조회한다.")
+    @Test
+    void findByOrderIdForUpdateTest() {
+        // given
+        Order saved = orderRepository.save(Order.of(1000L));
+
+        // when
+        Order found = orderRepository.findByOrderIdForUpdate(saved.getOrderId())
+                .orElseThrow(() -> new AssertionError("조회된 결과가 없습니다. orderId: " + saved.getId()));
+
+        // then
+        assertThat(saved).isEqualTo(found);
+    }
+
     @DisplayName("주문을 업데이트한다.")
     @Test
     void updateTest() {

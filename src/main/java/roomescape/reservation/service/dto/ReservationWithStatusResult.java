@@ -11,6 +11,9 @@ public record ReservationWithStatusResult(
         ReservationTime time,
         Theme theme,
         String status,
+        String orderId,
+        Long amount,
+        String paymentKey,
         Long waitingOrder
 ) {
 

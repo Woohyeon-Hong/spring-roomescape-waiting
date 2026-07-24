@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>예약하기 - Roomescape</title>
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="/styles.css" rel="stylesheet" />
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <p class="eyebrow">ROOMESCAPE</p>
+      <h1 id="themeTitle">예약하기</h1>
+      <nav class="top-nav">
+        <a class="admin-link" href="/index.html">홈으로 돌아가기</a>
+      </nav>
+    </header>
+
+    <section class="panel" hidden id="catalogSection">
+      <h2>전체 테마</h2>
+      <div class="theme-cards" id="themeCatalog"></div>
+    </section>
+
+    <section class="panel" hidden id="themeSummary">
+      <div class="theme-summary">
+        <img alt="" id="themeImage" src="" />
+        <div class="theme-summary-body">
+          <strong id="themeName"></strong>
+          <p id="themeDescription"></p>
+          <span class="theme-amount" id="themeAmount"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" hidden id="dateTimeSection">
+      <h2>날짜 · 시간 선택</h2>
+      <form class="grid-form" id="bookingForm">
+        <label class="field">
+          <span>예약자 이름 (영문)</span>
+          <input id="bookingName" maxlength="10" name="bookingName" pattern="[A-Za-z]+" placeholder="이름을 입력하세요" required />
+        </label>
+        <label class="field">
+          <span>날짜</span>
+          <input id="bookingDate" name="bookingDate" required type="date" />
+        </label>
+      </form>
+      <div class="chips" id="availableTimes"></div>
+    </section>
+
+    <div aria-busy="true" class="loading-box" hidden id="loadingState" role="status">
+      <span aria-hidden="true" class="spinner"></span>
+      <span>처리 중입니다...</span>
+    </div>
+    <p class="message" id="message" role="status"></p>
+  </main>
+  <script src="https://js.tosspayments.com/v2/standard"></script>
+  <script src="/common.js"></script>
+  <script src="/booking.js"></script>
+</body>
+</html>

@@ -71,6 +71,19 @@ public class JdbcOrderRepository implements OrderRepository{
     }
 
     @Override
+    public Optional<Order> findByOrderIdForUpdate(String orderId) {
+        String sql = """
+               SELECT *
+               FROM orders
+               WHERE order_id = ?
+               FOR UPDATE
+               """;
+
+        return jdbcTemplate.query(sql, ORDER_ROW_MAPPER, orderId)
+                .stream().findFirst();
+    }
+
+    @Override
     public void update(Order order) {
         String sql = """
                UPDATE orders

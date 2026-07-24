@@ -11,6 +11,8 @@ public interface OrderRepository {
 
     Optional<Order> findByOrderId(String orderId);
 
+    Optional<Order> findByOrderIdForUpdate(String orderId);
+
     void update(Order order);
 
     int deleteByOrderId(String orderId);

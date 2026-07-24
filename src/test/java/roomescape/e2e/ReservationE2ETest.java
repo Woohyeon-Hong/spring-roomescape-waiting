@@ -58,7 +58,7 @@ public class ReservationE2ETest extends E2ETest {
                 .body("size()", is(1))
                 .body("[0].name", is("brown"))
                 .body("[0].date", is("2026-05-05"))
-                .body("[0].status", is("reserved"));
+                .body("[0].status", is("CONFIRMED"));
 
         RestAssured.given().log().all()
                 .header("Authorization", "brown")

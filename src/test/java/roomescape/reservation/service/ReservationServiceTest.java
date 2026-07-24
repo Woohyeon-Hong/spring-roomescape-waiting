@@ -233,7 +233,10 @@ class ReservationServiceTest {
                                 LocalDate.of(2026, 5, 15),
                                 new ReservationTime(1L, LocalTime.of(10, 0)),
                                 new Theme(1L, "이름", "설명", "thumbnailUrl", null),
-                                "reserved",
+                                "CONFIRMED",
+                                "order-id",
+                                1000L,
+                                "payment-key",
                                 0L
                         ), new ReservationWithStatusResult(
                                 1L,
@@ -242,6 +245,9 @@ class ReservationServiceTest {
                                 new ReservationTime(2L, LocalTime.of(11, 0)),
                                 new Theme(1L, "이름", "설명", "thumbnailUrl", null),
                                 "waiting",
+                                null,
+                                null,
+                                null,
                                 1L
                         )
                 ));
@@ -259,7 +265,10 @@ class ReservationServiceTest {
                                 LocalDate.of(2026, 5, 15),
                                 new ReservationTime(1L, LocalTime.of(10, 0)),
                                 new Theme(1L, "이름", "설명", "thumbnailUrl", null),
-                                "reserved",
+                                "CONFIRMED",
+                                "order-id",
+                                1000L,
+                                "payment-key",
                                 0L
                         ), new ReservationWithStatusResult(
                                 1L,
@@ -268,6 +277,9 @@ class ReservationServiceTest {
                                 new ReservationTime(2L, LocalTime.of(11, 0)),
                                 new Theme(1L, "이름", "설명", "thumbnailUrl", null),
                                 "waiting",
+                                null,
+                                null,
+                                null,
                                 1L
                         )
                 )

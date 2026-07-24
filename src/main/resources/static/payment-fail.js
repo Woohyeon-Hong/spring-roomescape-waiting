@@ -1,5 +1,3 @@
-const $ = (selector) => document.querySelector(selector);
-
 function setMessage(message) {
   $("#message").textContent = message;
 }
@@ -12,12 +10,12 @@ function renderFailResult(code, message, orderId) {
       <p>orderId: ${orderId ?? "-"}</p>
     </span>
   `;
-  setMessage("결제 인증이 실패했습니다.");
+  setMessage("결제 인증이 실패했습니다. 예약과 주문을 정리했습니다.");
 }
 
 async function cleanUpOrder(orderId) {
   try {
-    await fetch(`/orders/${encodeURIComponent(orderId)}`, { method: "DELETE" });
+    await api(`/orders/${encodeURIComponent(orderId)}/fail`, { method: "DELETE" });
   } catch (error) {
     console.error("주문 정리에 실패했습니다.", error);
   }

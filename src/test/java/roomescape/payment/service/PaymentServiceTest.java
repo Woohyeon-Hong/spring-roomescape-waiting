@@ -20,12 +20,16 @@ import roomescape.order.exception.PaymentAmountMismatchException;
 import roomescape.order.repository.OrderRepository;
 import roomescape.payment.PaymentConfirmation;
 import roomescape.payment.PaymentGateway;
+import roomescape.reservation.repository.ReservationRepository;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceTest {
 
     @Mock
     OrderRepository orderRepository;
+
+    @Mock
+    ReservationRepository reservationRepository;
 
     @Mock
     PaymentGateway paymentGateway;
@@ -83,5 +87,33 @@ class PaymentServiceTest {
 
         verify(paymentGateway, never()).confirm(any());
         verify(paymentConfirmationApplier, never()).apply(any(), any());
+    }
+
+    @DisplayName("결제 정리를 시도하면 orderId에 해당하는 주문과 예약을 삭제한다.")
+    @Test
+    void rollbackTest_success() {
+        //given
+        Order order = new Order(1L, "order-id", 1000L, null);
+        when(orderRepository.findByOrderIdForUpdate("order-id"))
+                .thenReturn(Optional.of(order));
+
+        //when
+        paymentService.rollback("order-id");
+
+        //then
+        verify(reservationRepository).deleteByOrderId("order-id");
+        verify(orderRepository).deleteByOrderId("order-id");
+    }
+
+    @DisplayName("결제 정리를 시도 시 orderId에 해당하는 주문이 없으면 예외가 발생한다.")
+    @Test
+    void rollbackTest_order_not_found() {
+        //given
+        when(orderRepository.findByOrderIdForUpdate("order-id"))
+                .thenReturn(Optional.empty());
+
+        //when & then
+        assertThatThrownBy(() -> paymentService.rollback("order-id"))
+                .isInstanceOf(OrderNotFoundException.class);
     }
 }

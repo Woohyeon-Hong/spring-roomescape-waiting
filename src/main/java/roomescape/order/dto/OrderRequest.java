@@ -1,4 +1,4 @@
-package roomescape.order.controller.dto;
+package roomescape.order.dto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

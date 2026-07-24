@@ -1,4 +1,4 @@
-package roomescape.order.controller.dto;
+package roomescape.order.dto;
 
 import roomescape.order.domain.Order;
 

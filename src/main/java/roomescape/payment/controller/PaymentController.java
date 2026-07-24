@@ -2,6 +2,7 @@ package roomescape.payment.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,6 +24,12 @@ public class PaymentController {
             @RequestBody PaymentConfirmRequest request
     ) {
         paymentService.confirm(orderId, request.paymentKey(), request.amount());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{orderId}/fail")
+    public ResponseEntity<Void> fail(@PathVariable("orderId") String orderId) {
+        paymentService.rollback(orderId);
         return ResponseEntity.noContent().build();
     }
 }

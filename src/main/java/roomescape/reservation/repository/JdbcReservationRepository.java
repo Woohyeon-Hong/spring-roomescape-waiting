@@ -97,11 +97,15 @@ public class JdbcReservationRepository implements ReservationRepository {
                h.description AS theme_description,
                h.thumbnail_url AS theme_url,
                h.amount AS theme_amount,
-               'reserved' AS status,
+               r.status AS status,
+               o.order_id AS order_id,
+               o.amount AS order_amount,
+               o.payment_key AS payment_key,
                0 AS waiting_order
         FROM reservation r
         INNER JOIN reservation_time t ON r.time_id = t.id
         INNER JOIN theme h ON r.theme_id = h.id
+        INNER JOIN orders o ON r.order_id = o.id
         WHERE r.name = ?
 
         UNION ALL
@@ -117,6 +121,9 @@ public class JdbcReservationRepository implements ReservationRepository {
                h.thumbnail_url AS theme_url,
                h.amount AS theme_amount,
                'waiting' AS status,
+               CAST(NULL AS VARCHAR(255)) AS order_id,
+               CAST(NULL AS BIGINT) AS order_amount,
+               CAST(NULL AS VARCHAR(255)) AS payment_key,
                ranked.waiting_order AS waiting_order
         FROM (
             SELECT rw.id,
@@ -158,6 +165,9 @@ public class JdbcReservationRepository implements ReservationRepository {
                     time,
                     theme,
                     resultSet.getString("status"),
+                    resultSet.getString("order_id"),
+                    resultSet.getObject("order_amount", Long.class),
+                    resultSet.getString("payment_key"),
                     resultSet.getLong("waiting_order")
             );
         };
@@ -352,7 +362,7 @@ public class JdbcReservationRepository implements ReservationRepository {
           ON r.time_id = t.id
         INNER JOIN theme h
           ON r.theme_id = h.id
-        LEFT JOIN orders o
+        INNER JOIN orders o
           ON r.order_id = o.id
         WHERE o.order_id = ?
         """;
@@ -392,5 +402,17 @@ public class JdbcReservationRepository implements ReservationRepository {
                """;
 
         return jdbcTemplate.update(sql, id);
+    }
+
+    @Override
+    public int deleteByOrderId(String orderId) {
+        String sql = """
+        DELETE FROM reservation
+        WHERE order_id IN (
+          SELECT id FROM orders WHERE order_id = ?
+        )
+        """;
+
+        return jdbcTemplate.update(sql, orderId);
     }
 }

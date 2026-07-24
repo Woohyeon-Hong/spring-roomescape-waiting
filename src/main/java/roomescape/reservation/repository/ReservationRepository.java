@@ -30,4 +30,6 @@ public interface ReservationRepository {
     void update(Reservation reservation);
 
     int deleteById(Long id);
+
+    int deleteByOrderId(String orderId);
 }

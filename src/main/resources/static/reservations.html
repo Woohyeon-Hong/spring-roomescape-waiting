@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>내 예약 - Roomescape</title>
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="/styles.css" rel="stylesheet" />
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <p class="eyebrow">ROOMESCAPE</p>
+      <h1>내 예약 · 대기 · 결제내역</h1>
+      <p>예약자 이름으로 나의 예약, 대기, 결제 상태를 확인하세요.</p>
+      <nav class="top-nav">
+        <a class="admin-link" href="/index.html">테마 예약하러 가기</a>
+      </nav>
+    </header>
+
+    <section class="panel">
+      <form class="grid-form" id="lookupForm">
+        <label class="field">
+          <span>예약자 이름 (영문)</span>
+          <input id="lookupName" maxlength="10" name="lookupName" pattern="[A-Za-z]+" placeholder="이름을 입력하세요" required />
+        </label>
+        <button type="submit">조회</button>
+      </form>
+    </section>
+
+    <section aria-live="polite" class="panel promote-section" hidden id="promotableSection">
+      <h2>지금 승격 가능한 대기</h2>
+      <p class="promote-hint">결제를 완료해야 예약으로 확정됩니다. 다른 대기자가 먼저 승격하면 기회가 사라질 수 있어요.</p>
+      <div class="list" id="promotableList"></div>
+    </section>
+
+    <section class="panel">
+      <h2>내 예약</h2>
+      <div class="list" id="reservationList">예약자 이름을 입력하고 조회해 주세요.</div>
+    </section>
+
+    <section class="panel">
+      <h2>내 대기</h2>
+      <div class="list" id="waitingList">예약자 이름을 입력하고 조회해 주세요.</div>
+    </section>
+
+    <div aria-busy="true" class="loading-box" hidden id="loadingState" role="status">
+      <span aria-hidden="true" class="spinner"></span>
+      <span>조회 중입니다...</span>
+    </div>
+    <p class="message" id="message" role="status"></p>
+  </main>
+  <script src="https://js.tosspayments.com/v2/standard"></script>
+  <script src="/common.js"></script>
+  <script src="/reservations.js"></script>
+</body>
+</html>
