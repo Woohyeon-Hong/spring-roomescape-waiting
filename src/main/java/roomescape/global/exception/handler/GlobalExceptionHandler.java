@@ -1,5 +1,6 @@
 package roomescape.global.exception.handler;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -15,6 +16,7 @@ import roomescape.global.exception.DeleteFailedException;
 import roomescape.global.exception.DuplicateException;
 import roomescape.global.exception.InvalidRequestValueException;
 import roomescape.global.exception.NotFoundException;
+import roomescape.global.exception.RetryableException;
 import roomescape.global.exception.response.ErrorResponse;
 import roomescape.payment.exception.PaymentAlreadyProcessedException;
 import roomescape.payment.exception.PaymentBadRequestException;
@@ -154,5 +156,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PaymentReadTimeoutException.class)
     public ResponseEntity<ErrorResponse> handlePaymentReadTimeoutException(PaymentReadTimeoutException e) {
         return makeResponse(e, HttpStatus.GATEWAY_TIMEOUT);
+    }
+
+    // 우리 서버가 외부 API(토스)의 클라이언트로서 스스로 호출을 조절했다는 사실은 내부 구현
+    // 디테일이므로, 호출자 책임을 뜻하는 429 대신 "지금은 처리할 수 없다"는 503으로 감춰서 응답한다.
+    @ExceptionHandler(RetryableException.class)
+    public ResponseEntity<ErrorResponse> handleRetryableException(RetryableException e) {
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(e.retryAfterSeconds()))
+                .body(ErrorResponse.of(e));
     }
 }

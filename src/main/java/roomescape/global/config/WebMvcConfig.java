@@ -27,7 +27,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
     ) {
         this.objectMapper = objectMapper;
         this.rateLimitInterceptor = new RateLimitInterceptor(
-                new TokenBucketRateLimiter(capacity, refillPerSec, System::nanoTime)
+                new TokenBucketRateLimiter(capacity, refillPerSec, System::nanoTime),
+                objectMapper
         );
     }
 

@@ -21,3 +21,9 @@ rate-limit:
   # RateLimitInterceptorTest가 @TestPropertySource로 별도 낮은 값을 줘서 검증한다.
   capacity: 1000
   refill-per-second: 1000.0
+
+outbound-rate-limit:
+  # 같은 이유로(공유 컨텍스트 + 반복 confirm 호출) 넉넉하게 잡는다.
+  # 동작 검증은 OutboundRateLimitInterceptorTest가 순수 단위 테스트로 별도 커버한다.
+  capacity: 1000
+  refill-per-second: 1000.0

@@ -14,19 +14,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
+import roomescape.rateLimit.TokenBucketRateLimiter;
 
 @Configuration
 public class TossConfig {
-
-    @Bean
-    public RestClient tossRestClient(
-            @Value("${toss.base-url}") String baseUrl,
-            @Value("${toss.secret-key}") String secret,
-            @Value("${toss.connect-timeout-ms}") int connectTimeoutMs,
-            @Value("${toss.read-timeout-ms}") int readTimeoutMs
-    ) {
-        return buildRestClient(baseUrl, secret, connectTimeoutMs, readTimeoutMs);
-    }
 
     public static RestClient buildRestClient(String baseUrl, String secret, int connectTimeoutMs, int readTimeoutMs) {
         String basic = Base64.getEncoder()
@@ -52,5 +43,24 @@ public class TossConfig {
                 .build();
 
         return new HttpComponentsClientHttpRequestFactory(httpClient);
+    }
+
+    @Bean
+    public RestClient tossRestClient(
+            @Value("${toss.base-url}") String baseUrl,
+            @Value("${toss.secret-key}") String secret,
+            @Value("${toss.connect-timeout-ms}") int connectTimeoutMs,
+            @Value("${toss.read-timeout-ms}") int readTimeoutMs,
+            @Value("${outbound-rate-limit.capacity}") long outboundCapacity,
+            @Value("${outbound-rate-limit.refill-per-second}") double outboundRefillPerSec
+    ) {
+        TokenBucketRateLimiter outboundRateLimiter = new TokenBucketRateLimiter(
+                outboundCapacity, outboundRefillPerSec, System::nanoTime
+        );
+
+        return buildRestClient(baseUrl, secret, connectTimeoutMs, readTimeoutMs)
+                .mutate()
+                .requestInterceptor(new OutboundRateLimitInterceptor(outboundRateLimiter))
+                .build();
     }
 }
