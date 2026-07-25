@@ -91,12 +91,12 @@
 
 ### 1. 토큰 버킷 구현
 
-- [ ] `capacity`(허용 버스트)와 `refillPerSec`(평균 TPS 상한)을 가진 토큰 버킷을 **직접 구현**한다. 외부 의존성은 쓰지 않는다.
-- [ ] 보충은 "마지막 보충 이후 경과 시간 × `refillPerSec`"로 계산하되 `capacity`를 넘지 않는다.
-- [ ] `tryConsume()`: 토큰 ≥1이면 1개 소비 후 통과(`true`), 없으면 거부(`false`).
-- [ ] `retryAfterSeconds()`: 1개가 찰 때까지 필요한 초를 **올림(**`Math.ceil`**)** 으로 반환한다.
-- [ ] 시간 의존 로직은 `System::nanoTime`을 박지 말고 `LongSupplier` **가짜 시계**를 주입해 결정적으로 테스트한다.
-- [ ] 동시 요청에서도 정확히 `capacity`개만 통과하도록 동시성을 안전하게 처리한다.
+- [x] `capacity`(허용 버스트)와 `refillPerSec`(평균 TPS 상한)을 가진 토큰 버킷을 **직접 구현**한다. 외부 의존성은 쓰지 않는다.
+- [x] 보충은 "마지막 보충 이후 경과 시간 × `refillPerSec`"로 계산하되 `capacity`를 넘지 않는다.
+- [x] `tryConsume()`: 토큰 ≥1이면 1개 소비 후 통과(`true`), 없으면 거부(`false`).
+- [x] `retryAfterSeconds()`: 1개가 찰 때까지 필요한 초를 **올림(**`Math.ceil`**)** 으로 반환한다.
+- [x] 시간 의존 로직은 `System::nanoTime`을 박지 말고 `LongSupplier` **가짜 시계**를 주입해 결정적으로 테스트한다.
+- [x] 동시 요청에서도 정확히 `capacity`개만 통과하도록 동시성을 안전하게 처리한다.
 
 ### 2. 서버(게이트웨이) 관점 — 한도 초과 요청 거부
 
