@@ -52,7 +52,8 @@ public class TossConfig {
             @Value("${toss.connect-timeout-ms}") int connectTimeoutMs,
             @Value("${toss.read-timeout-ms}") int readTimeoutMs,
             @Value("${outbound-rate-limit.capacity}") long outboundCapacity,
-            @Value("${outbound-rate-limit.refill-per-second}") double outboundRefillPerSec
+            @Value("${outbound-rate-limit.refill-per-second}") double outboundRefillPerSec,
+            @Value("${gateway.max-attempts}") int maxAttempts
     ) {
         TokenBucketRateLimiter outboundRateLimiter = new TokenBucketRateLimiter(
                 outboundCapacity, outboundRefillPerSec, System::nanoTime
@@ -60,6 +61,7 @@ public class TossConfig {
 
         return buildRestClient(baseUrl, secret, connectTimeoutMs, readTimeoutMs)
                 .mutate()
+                .requestInterceptor(new RetryAfterInterceptor(maxAttempts))
                 .requestInterceptor(new OutboundRateLimitInterceptor(outboundRateLimiter))
                 .build();
     }

@@ -27,3 +27,6 @@ rate-limit:
 outbound-rate-limit:
   capacity: 5            # 토스로 나가는 호출의 허용 버스트
   refill-per-second: 1.0 # 토스로 나가는 호출의 평균 TPS 상한
+
+gateway:
+  max-attempts: 3
