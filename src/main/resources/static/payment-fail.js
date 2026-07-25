@@ -15,7 +15,7 @@ function renderFailResult(code, message, orderId) {
 
 async function cleanUpOrder(orderId) {
   try {
-    await api(`/orders/${encodeURIComponent(orderId)}/fail`, { method: "DELETE" });
+    await api(`/payments/${encodeURIComponent(orderId)}/fail`, { method: "DELETE" });
   } catch (error) {
     console.error("주문 정리에 실패했습니다.", error);
   }

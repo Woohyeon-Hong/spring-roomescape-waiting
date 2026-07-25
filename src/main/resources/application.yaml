@@ -19,3 +19,7 @@ toss:
     secret-key: test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6
     connect-timeout-ms: 1000
     read-timeout-ms: 30000
+
+rate-limit:
+  capacity: 5            # 허용 버스트
+  refill-per-second: 1.0 # 평균 TPS 상한

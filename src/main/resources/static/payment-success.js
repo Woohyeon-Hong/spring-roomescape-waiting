@@ -46,7 +46,7 @@ async function attemptConfirm() {
   $("#loadingState").hidden = false;
 
   try {
-    await api(`/orders/${encodeURIComponent(confirmParams.orderId)}/confirm`, {
+    await api(`/payments/${encodeURIComponent(confirmParams.orderId)}/confirm`, {
       method: "POST",
       body: JSON.stringify({ paymentKey: confirmParams.paymentKey, amount: confirmParams.amount })
     });
@@ -59,7 +59,7 @@ async function attemptConfirm() {
     }
 
     try {
-      await api(`/orders/${encodeURIComponent(confirmParams.orderId)}/fail`, { method: "DELETE" });
+      await api(`/payments/${encodeURIComponent(confirmParams.orderId)}/fail`, { method: "DELETE" });
     } catch (cleanupError) {
       console.error("주문 정리에 실패했습니다.", cleanupError);
     }

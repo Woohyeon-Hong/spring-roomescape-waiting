@@ -39,7 +39,7 @@ class PaymentControllerTest {
                 """;
 
         mockMvc.perform(
-                post("/orders/{orderId}/confirm", "order-id")
+                post("/payments/{orderId}/confirm", "order-id")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body)
         ).andExpect(status().isNoContent());
@@ -51,7 +51,7 @@ class PaymentControllerTest {
     @Test
     void failTest_success() throws Exception {
         mockMvc.perform(
-                delete("/orders/{orderId}/fail", "order-id")
+                delete("/payments/{orderId}/fail", "order-id")
                         .contentType(MediaType.APPLICATION_JSON)
         ).andExpect(status().isNoContent());
     }
@@ -70,7 +70,7 @@ class PaymentControllerTest {
                 .when(paymentService).confirm(anyString(), any(), anyLong());
 
         mockMvc.perform(
-                post("/orders/{orderId}/confirm", "order-id")
+                post("/payments/{orderId}/confirm", "order-id")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body)
         ).andExpect(status().isGatewayTimeout());

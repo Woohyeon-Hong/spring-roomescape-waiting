@@ -110,7 +110,7 @@ public abstract class E2ETest {
         RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body(confirmRequest)
-                .when().post("/orders/{orderId}/confirm", orderId)
+                .when().post("/payments/{orderId}/confirm", orderId)
                 .then().statusCode(204);
     }
 

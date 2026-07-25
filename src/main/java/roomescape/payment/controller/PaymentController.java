@@ -13,7 +13,7 @@ import roomescape.payment.service.PaymentService;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/orders")
+@RequestMapping("/payments")
 public class PaymentController {
 
     private final PaymentService paymentService;

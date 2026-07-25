@@ -14,3 +14,10 @@ toss:
   secret-key: test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R
   connect-timeout-ms: 1000
   read-timeout-ms: 1000
+
+rate-limit:
+  # e2e/통합 테스트가 하나의 캐시된 컨텍스트를 공유하며 짧은 시간에 결제 확정을 반복 호출하므로,
+  # 운영값(5)보다 넉넉하게 잡아 테스트 간섭을 막는다. rate limit 동작 자체는
+  # RateLimitInterceptorTest가 @TestPropertySource로 별도 낮은 값을 줘서 검증한다.
+  capacity: 1000
+  refill-per-second: 1000.0

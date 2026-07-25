@@ -100,9 +100,9 @@
 
 ### 2. 서버(게이트웨이) 관점 — 한도 초과 요청 거부
 
-- [ ] 결제·예약 엔드포인트에 토큰 버킷을 `HandlerInterceptor`로 적용한다.
-- [ ] `preHandle`에서 `tryConsume()`이 `false`면 컨트롤러를 호출하지 않고(`false` 반환), 응답을 `429`로 세팅하고 `Retry-After` 헤더에 `retryAfterSeconds()` 값(초)을 담는다.
-- [ ] `capacity`/`refillPerSec`는 `rate-limit.*`로 외부화해 코드 수정 없이 거부 시점을 바꾼다.
+- [x] 결제·예약 엔드포인트에 토큰 버킷을 `HandlerInterceptor`로 적용한다.
+- [x] `preHandle`에서 `tryConsume()`이 `false`면 컨트롤러를 호출하지 않고(`false` 반환), 응답을 `429`로 세팅하고 `Retry-After` 헤더에 `retryAfterSeconds()` 값(초)을 담는다.
+- [x] `capacity`/`refillPerSec`는 `rate-limit.*`로 외부화해 코드 수정 없이 거부 시점을 바꾼다.
 
 ### 3. 클라이언트 관점 — 토스의 429에 백오프 재시도
 
